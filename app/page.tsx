@@ -955,9 +955,9 @@ export default function Home() {
       {/* About Us Section */}
       <section id="about" className="relative z-10 py-20 px-6">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">About United4ContactSolutions</h2>
+          <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">About Us</h2>
           <p className="text-white/70 text-justify mb-16 max-w-3xl mx-auto text-lg leading-relaxed">
-            United4ContactSolutions is a professional virtual assistant and customer support team committed to delivering efficient, reliable, and personalized solutions for businesses of all sizes. Backed by strong administrative expertise and modern technology, we handle end-to-end customer service, task management, and backend operations—including QuickBooks support, healthcare assistance, IT coordination, and automotive service workflows. Guided by collaboration, accuracy, and service excellence, we streamline daily processes, elevate customer interactions, and provide flexible support tailored to each client's needs. As a trusted partner, United4ContactSolutions empowers businesses to operate smoothly and stay focused on growth while we handle the details with integrity and care.
+            United4ContactSolutions delivers modern virtual assistance and customer support that keeps teams focused on what matters most. We blend reliable talent, proven processes, and smart tools to handle customer communications, admin tasks, and operational follow-through—so every client interaction feels seamless and on brand.
           </p>
           
           {/* Mission & Vision Cards */}
