@@ -468,6 +468,7 @@ interface TeamMember {
   experience: string;
   email: string;
   projects: string[];
+  photo: string;
 }
 
 interface ContactFormData {
@@ -587,7 +588,8 @@ export default function Home() {
       skills: ["Strategic Leadership", "Business Development", "Client Relations", "Operations Management"],
       experience: "10+ years",
       email: "nino.nesperos@united4contactsolutions.com",
-      projects: ["Company Foundation", "Service Excellence Program", "Client Success Initiative"]
+      projects: ["Company Foundation", "Service Excellence Program", "Client Success Initiative"],
+      photo: "",
     },
     {
       name: "Jason Pada",
@@ -597,7 +599,8 @@ export default function Home() {
       skills: ["IT Support", "Infrastructure Management", "Systems Administration", "Process Optimization"],
       experience: "8+ years",
       email: "jason.pada@united4contactsolutions.com",
-      projects: ["Infrastructure Modernization", "Security Compliance", "IT Service Desk Optimization"]
+      projects: ["Infrastructure Modernization", "Security Compliance", "IT Service Desk Optimization"],
+      photo: "",
     },
     {
       name: "Louis Gascon",
@@ -607,7 +610,8 @@ export default function Home() {
       skills: ["Customer Support", "Client Relations", "Problem Resolution", "Communication"],
       experience: "6+ years",
       email: "louis.gascon@united4contactsolutions.com",
-      projects: ["Customer Experience Revamp", "Support Excellence Initiative", "Client Loyalty Program"]
+      projects: ["Customer Experience Revamp", "Support Excellence Initiative", "Client Loyalty Program"],
+      photo: "",
     }
   ];
 
@@ -1119,22 +1123,30 @@ export default function Home() {
       )}
 
       {/* Meet our Team Section */}
-      <section id="team" className="relative z-10 py-20 px-6">
+      <section id="team" className="relative z-10 py-20 px-6 bg-black/40">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">Meet our Team</h2>
-          <p className="text-white/70 text-center mb-16 max-w-2xl mx-auto">
-            The talented individuals behind our success
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-            {teamMembers.map((member, i) => (
+          <div className="text-center mb-12">
+            <p className="text-sm text-blue-400 uppercase tracking-[0.4em] mb-3">Our Team</p>
+            <h2 className="text-white text-4xl md:text-5xl font-bold mb-3">Our Experts Are Like No Other</h2>
+            <p className="text-white/70 max-w-4xl mx-auto">
+              Partner with our experts to elevate your operations. We work closely with every client to deliver practical
+              improvements that make daily workflows smarter and more efficient.
+            </p>
+        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-items-center">
+            {teamMembers.map((member) => (
               <div
-                key={i}
+                key={member.email}
                 onClick={() => handleMemberClick(member)}
-                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 transition-all duration-300 hover:scale-105 cursor-pointer active:scale-95"
+                className="group cursor-pointer rounded-[32px] overflow-hidden bg-white shadow-2xl flex flex-col w-full max-w-xs"
               >
-                <div className="text-6xl mb-4">{member.icon}</div>
-                <h3 className="text-white text-xl font-semibold mb-2">{member.name}</h3>
-                <p className="text-white/70 text-sm">{member.role}</p>
+                <div className="relative h-64 w-full bg-gradient-to-br from-gray-200 via-gray-100 to-white flex items-center justify-center">
+                  <div className="text-6xl">{member.icon}</div>
+                </div>
+                <div className="p-6 text-center">
+                  <h3 className="text-black text-lg font-semibold">{member.name}</h3>
+                  <p className="text-gray-600 text-sm">{member.role}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -1593,8 +1605,8 @@ export default function Home() {
               {activeSection === "home" && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full animate-ping"></span>
               )}
-            </a>
-            <a
+          </a>
+          <a
               href="#team"
               onClick={(e) => handleNavClick("team", e)}
               className={`relative px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300 ${
@@ -1641,8 +1653,8 @@ export default function Home() {
               {activeSection === "contacts" && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full animate-ping"></span>
               )}
-            </a>
-          </div>
+          </a>
+        </div>
         </div>
       </nav>
     </div>
