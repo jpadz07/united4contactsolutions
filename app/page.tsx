@@ -882,79 +882,56 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Trust Indicators Section */}
-      <section className="relative z-10 py-12 px-6 bg-gray-900/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center justify-items-center">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">500+</div>
-              <div className="text-sm text-gray-400 uppercase tracking-wide">Projects Completed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">99.8%</div>
-              <div className="text-sm text-gray-400 uppercase tracking-wide">Client Satisfaction</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">24/7</div>
-              <div className="text-sm text-gray-400 uppercase tracking-wide">Support Available</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">8+</div>
-              <div className="text-sm text-gray-400 uppercase tracking-wide">Years Experience</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Connection Values Section */}
-      <section className="relative z-10 py-20 px-6 bg-gradient-to-r from-slate-900/50 to-gray-900/50">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-white text-3xl md:text-4xl font-bold text-center mb-4">Why Choose United4ContactSolutions</h2>
-          <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
-            Our commitment to excellence drives everything we do, ensuring your business receives the professional support it deserves.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { 
-                icon: "🤝", 
-                title: "Unified Team", 
-                desc: "One cohesive team working toward your success with shared accountability and clear communication",
-                color: "from-blue-600 to-blue-800"
-              },
-              { 
-                icon: "🎯", 
-                title: "Results-Focused", 
-                desc: "Data-driven approach with measurable outcomes and continuous optimization for maximum ROI",
-                color: "from-slate-600 to-slate-800"
-              },
-              { 
-                icon: "📞", 
-                title: "Always Connected", 
-                desc: "24/7 availability with multiple communication channels ensuring seamless business continuity",
-                color: "from-blue-600 to-cyan-700"
-              },
-              { 
-                icon: "💡", 
-                title: "Innovative Solutions", 
-                desc: "Cutting-edge tools and methodologies tailored to solve complex business challenges efficiently",
-                color: "from-slate-600 to-blue-700"
-              }
-            ].map((value, i) => (
-              <div key={i} className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 text-center group hover:bg-gray-800/70 transition-all duration-300">
-                <div className={`w-14 h-14 mx-auto mb-4 rounded-lg bg-gradient-to-r ${value.color} flex items-center justify-center text-xl shadow-lg`}>
-                  {value.icon}
-                </div>
-                <h3 className="text-white text-lg font-semibold mb-3">{value.title}</h3>
-                <p className="text-gray-300 text-sm leading-relaxed">{value.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* About Us Section */}
       <section id="about" className="relative z-10 py-20 px-6">
         <div className="max-w-7xl mx-auto">
+          <div className="mb-16">
+            <p className="text-sm text-blue-400 uppercase tracking-[0.4em] text-center mb-6">
+              Core Values
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[
+                {
+                  icon: "🤝",
+                  title: "Unified Team",
+                  desc: "One cohesive team working toward your success with shared accountability and clear communication.",
+                  color: "from-blue-600 to-blue-800",
+                },
+                {
+                  icon: "🎯",
+                  title: "Results-Focused",
+                  desc: "Data-driven approach with measurable outcomes and continuous optimization for maximum ROI.",
+                  color: "from-slate-600 to-slate-800",
+                },
+                {
+                  icon: "📞",
+                  title: "Always Connected",
+                  desc: "24/7 availability with multiple communication channels ensuring seamless business continuity.",
+                  color: "from-blue-600 to-cyan-700",
+                },
+                {
+                  icon: "💡",
+                  title: "Innovative Solutions",
+                  desc: "Cutting-edge tools and methodologies tailored to solve complex business challenges efficiently.",
+                  color: "from-slate-600 to-blue-700",
+                },
+              ].map((value) => (
+                <div
+                  key={value.title}
+                  className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 text-center group hover:bg-gray-800/70 transition-all duration-300"
+                >
+                  <div
+                    className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${value.color} flex items-center justify-center text-2xl shadow-lg`}
+                  >
+                    {value.icon}
+                  </div>
+                  <h3 className="text-white text-xl font-semibold mb-3">{value.title}</h3>
+                  <p className="text-gray-300 text-sm leading-relaxed">{value.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">About Us</h2>
           <p className="text-white/70 text-justify mb-16 max-w-3xl mx-auto text-lg leading-relaxed">
             United4ContactSolutions delivers modern virtual assistance and customer support that keeps teams focused on what matters most. We blend reliable talent, proven processes, and smart tools to handle customer communications, admin tasks, and operational follow-through—so every client interaction feels seamless and on brand.
