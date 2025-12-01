@@ -601,17 +601,35 @@ export default function AdminDashboard() {
   // Show loading while checking authentication
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Verifying authentication...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 text-white flex items-center justify-center relative overflow-hidden">
+        {/* Animated background */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
+        </div>
+        <div className="text-center relative z-10">
+          <div className="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6 relative">
+            <div className="absolute inset-0 border-4 border-cyan-500/30 border-t-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+          </div>
+          <p className="text-gray-300 text-lg font-medium">Verifying authentication...</p>
+          <div className="mt-4 flex gap-2 justify-center">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex relative">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950/50 to-slate-950 text-white flex relative overflow-hidden">
+      {/* Animated background particles */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
+      </div>
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -624,37 +642,42 @@ export default function AdminDashboard() {
       <aside
         className={`${
           sidebarOpen ? "w-64 translate-x-0" : "w-20 -translate-x-full md:translate-x-0"
-        } bg-gray-900/80 backdrop-blur-xl border-r border-gray-800/50 transition-all duration-300 flex flex-col fixed h-screen z-40 left-0 top-0`}
+        } glass-strong border-r border-white/10 transition-all duration-300 flex flex-col fixed h-screen z-40 left-0 top-0 shadow-2xl`}
       >
         {/* Logo/Header */}
-        <div className={`p-4 md:p-6 border-b border-gray-800/50 bg-gradient-to-r from-gray-900/50 to-transparent flex items-center ${sidebarOpen ? "justify-between" : "justify-center"} min-h-[80px]`}>
+        <div className={`p-4 md:p-6 border-b border-white/10 bg-gradient-to-r from-blue-500/10 via-cyan-500/5 to-transparent flex items-center ${sidebarOpen ? "justify-between" : "justify-center"} min-h-[90px] relative overflow-hidden`}>
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 shimmer opacity-30"></div>
+          
           {sidebarOpen && (
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30">
-                  U4
+            <div className="flex items-center gap-3 flex-1 min-w-0 relative z-10">
+              <div className="relative flex-shrink-0 group">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/50 animate-glow group-hover:scale-110 transition-transform duration-300">
+                  <span className="bg-gradient-to-r from-white to-cyan-100 bg-clip-text text-transparent">U4</span>
                 </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
+                <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-2 border-slate-950 shadow-lg animate-pulse"></div>
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/20 to-cyan-400/20 blur-xl -z-10"></div>
               </div>
               <div className="flex-1 min-w-0">
-                <h1 className="text-lg md:text-xl font-bold text-white truncate">
+                <h1 className="text-lg md:text-xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent truncate">
                   Dashboard
                 </h1>
-                <p className="text-xs text-gray-400 mt-0.5">Admin Panel</p>
+                <p className="text-xs text-gray-400 mt-0.5 font-medium">Admin Panel</p>
               </div>
             </div>
           )}
           {!sidebarOpen && (
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30">
-                U4
+            <div className="relative group">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/50 animate-glow group-hover:scale-110 transition-transform duration-300">
+                <span className="bg-gradient-to-r from-white to-cyan-100 bg-clip-text text-transparent">U4</span>
               </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
+              <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-2 border-slate-950 shadow-lg animate-pulse"></div>
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/20 to-cyan-400/20 blur-xl -z-10"></div>
             </div>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-800/50 rounded-lg transition-all duration-200 flex-shrink-0 text-gray-400 hover:text-white hover:scale-110 md:flex hidden"
+            className="p-2.5 hover:bg-white/10 rounded-xl transition-all duration-200 flex-shrink-0 text-gray-300 hover:text-white hover:scale-110 md:flex hidden backdrop-blur-sm border border-white/5 hover:border-white/20"
             aria-label="Toggle sidebar"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -664,39 +687,58 @@ export default function AdminDashboard() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 md:p-4 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-          {navItems.map((item) => (
+        <nav className="flex-1 p-3 md:p-4 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-thin">
+          {navItems.map((item, index) => (
             <button
               key={item.id}
               onClick={() => handleTabChange(item.id)}
-              className={`w-full flex items-center ${sidebarOpen ? "justify-start" : "justify-center"} gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-300 ease-out transform ${
+              className={`w-full flex items-center ${sidebarOpen ? "justify-start" : "justify-center"} gap-3 px-4 md:px-5 py-3 md:py-3.5 rounded-xl transition-all duration-300 ease-out transform relative group ${
                 activeTab === item.id
-                  ? "bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 text-blue-400 scale-[1.02] shadow-lg shadow-blue-500/20"
-                  : "hover:bg-gray-800/50 text-gray-300 hover:scale-[1.01] active:scale-[0.98]"
+                  ? "bg-gradient-to-r from-blue-500/20 via-cyan-500/15 to-blue-500/20 border border-blue-400/30 text-blue-300 scale-[1.02] shadow-lg shadow-blue-500/30 backdrop-blur-sm"
+                  : "hover:bg-white/5 text-gray-300 hover:text-white hover:scale-[1.01] active:scale-[0.98] border border-transparent hover:border-white/10"
               }`}
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
-              <span className={`flex-shrink-0 transition-transform duration-300 ${activeTab === item.id ? "scale-110" : ""}`}>
+              {/* Active indicator */}
+              {activeTab === item.id && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-blue-400 to-cyan-400 rounded-r-full"></div>
+              )}
+              
+              <span className={`flex-shrink-0 transition-all duration-300 relative z-10 ${
+                activeTab === item.id 
+                  ? "scale-110 text-blue-300" 
+                  : "group-hover:scale-110 group-hover:text-white"
+              }`}>
                 <item.icon />
               </span>
               {sidebarOpen && (
-                <span className={`text-sm md:text-base font-medium transition-all duration-300 truncate ${activeTab === item.id ? "font-semibold" : ""}`}>
+                <span className={`text-sm md:text-base font-medium transition-all duration-300 truncate relative z-10 ${
+                  activeTab === item.id 
+                    ? "font-semibold text-blue-200" 
+                    : "group-hover:text-white"
+                }`}>
                   {item.label}
                 </span>
+              )}
+              
+              {/* Hover glow effect */}
+              {activeTab === item.id && (
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 blur-xl -z-10"></div>
               )}
             </button>
           ))}
         </nav>
 
         {/* User Section */}
-        <div className="p-3 md:p-4 border-t border-gray-800/50 flex-shrink-0">
+        <div className="p-3 md:p-4 border-t border-white/10 flex-shrink-0 bg-gradient-to-t from-red-500/5 to-transparent">
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center ${sidebarOpen ? "justify-start" : "justify-center"} gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-xl hover:bg-red-600/20 text-red-400 transition-all duration-200`}
+            className={`w-full flex items-center ${sidebarOpen ? "justify-start" : "justify-center"} gap-3 px-4 md:px-5 py-3 md:py-3.5 rounded-xl hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all duration-200 border border-transparent hover:border-red-500/30 group backdrop-blur-sm`}
           >
-            <span className="flex-shrink-0">
+            <span className="flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
               <LogoutIcon />
             </span>
-            {sidebarOpen && <span className="text-sm md:text-base font-medium truncate">Logout</span>}
+            {sidebarOpen && <span className="text-sm md:text-base font-medium truncate group-hover:text-red-300">Logout</span>}
           </button>
         </div>
       </aside>
@@ -705,12 +747,13 @@ export default function AdminDashboard() {
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="fixed top-4 left-4 z-50 p-3 bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-md border border-gray-700/50 rounded-xl text-white md:hidden shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          className="fixed top-4 left-4 z-50 p-3.5 glass-strong border border-white/20 rounded-xl text-white md:hidden shadow-2xl hover:shadow-blue-500/30 transition-all duration-300 hover:scale-110 hover:border-blue-400/50 group"
           aria-label="Open menu"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
         </button>
       )}
 
@@ -722,24 +765,28 @@ export default function AdminDashboard() {
       >
         <div className="p-4 md:p-6 lg:p-8">
           {/* Top Bar */}
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
             <div className={`transition-all duration-300 ${isTransitioning ? "opacity-50" : "opacity-100"}`}>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full"></div>
+              <div className="flex items-center gap-4 mb-2">
+                <div className="relative">
+                  <div className="w-1.5 h-10 bg-gradient-to-b from-blue-400 via-cyan-400 to-blue-500 rounded-full shadow-lg shadow-blue-500/50"></div>
+                  <div className="absolute inset-0 w-1.5 h-10 bg-gradient-to-b from-blue-400 via-cyan-400 to-blue-500 rounded-full blur-md opacity-50"></div>
+                </div>
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-bold transition-all duration-300">
+                  <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent transition-all duration-300">
                     {navItems.find((item) => item.id === activeTab)?.label || "Dashboard"}
                   </h2>
-                  <p className="text-sm text-gray-400 mt-1">Manage your landing page content and settings</p>
+                  <p className="text-sm text-gray-400 mt-1 font-medium">Manage your landing page content and settings</p>
                 </div>
               </div>
             </div>
             {status && (
-              <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10 border border-green-500/30 rounded-lg text-green-400 text-sm animate-in fade-in duration-300 backdrop-blur-sm">
+              <div className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm animate-scale-in backdrop-blur-sm shadow-lg shadow-green-500/20">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>{status}</span>
+                <span className="font-medium">{status}</span>
               </div>
             )}
           </div>
@@ -779,29 +826,36 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 lg:p-8">
-                  <div className="flex items-center justify-between mb-6">
+                <div className="glass-strong rounded-2xl p-6 lg:p-8 border border-white/10 relative overflow-hidden">
+                  {/* Background gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-cyan-500/5 to-transparent"></div>
+                  
+                  <div className="flex items-center justify-between mb-6 relative z-10">
                     <div>
-                      <h3 className="text-xl font-semibold text-white mb-1">Quick Actions</h3>
-                      <p className="text-sm text-gray-400">Navigate to content sections</p>
+                      <h3 className="text-xl font-semibold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-1">Quick Actions</h3>
+                      <p className="text-sm text-gray-400 font-medium">Navigate to content sections</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
                     {[
-                      { label: "Edit Header & Hero", tab: "header" as TabType, icon: TargetIcon },
-                      { label: "Update Core Values", tab: "core-values" as TabType, icon: StarIcon },
-                      { label: "Manage Services", tab: "services" as TabType, icon: ServicesIcon },
-                      { label: "Update Team", tab: "team" as TabType, icon: UsersIcon },
+                      { label: "Edit Header & Hero", tab: "header" as TabType, icon: TargetIcon, gradient: "from-blue-500 to-cyan-500" },
+                      { label: "Update Core Values", tab: "core-values" as TabType, icon: StarIcon, gradient: "from-purple-500 to-pink-500" },
+                      { label: "Manage Services", tab: "services" as TabType, icon: ServicesIcon, gradient: "from-green-500 to-emerald-500" },
+                      { label: "Update Team", tab: "team" as TabType, icon: UsersIcon, gradient: "from-orange-500 to-red-500" },
                     ].map((action) => (
                       <button
                         key={action.tab}
                         onClick={() => handleTabChange(action.tab)}
-                        className="group flex items-center gap-3 p-4 bg-gray-900/50 border border-gray-700/30 rounded-xl hover:border-blue-500/50 hover:bg-gray-900/70 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200 text-left"
+                        className="group relative flex items-center gap-3 p-5 glass border border-white/10 rounded-xl hover:border-white/30 hover:shadow-xl hover:shadow-blue-500/20 transition-all duration-300 text-left hover:-translate-y-1 overflow-hidden"
                       >
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600/20 to-cyan-600/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        {/* Hover gradient */}
+                        <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
+                        
+                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg relative z-10`}>
                           <action.icon />
+                          <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${action.gradient} blur-md opacity-50 group-hover:opacity-75 transition-opacity duration-300`}></div>
                         </div>
-                        <span className="font-medium text-sm">{action.label}</span>
+                        <span className="font-semibold text-sm relative z-10 group-hover:text-white transition-colors duration-300">{action.label}</span>
                       </button>
                     ))}
                   </div>
