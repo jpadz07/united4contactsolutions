@@ -516,6 +516,182 @@ export default function Home() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Content from Supabase
+  const [headerData, setHeaderData] = useState({
+    companyName: "United4ContactSolutions",
+    tagline: "Unity • Precision • Integrity • Impact",
+  });
+  const [heroData, setHeroData] = useState({
+    headline: "We Build Solutions That Drive Results",
+    subheadline: "Connecting Every Step",
+    description:
+      "United4ContactSolutions delivers comprehensive virtual assistance and customer support services that empower businesses to operate efficiently, scale confidently, and achieve sustainable growth through professional, reliable, and innovative solutions.",
+    ctaPrimary: "Schedule Consultation",
+    ctaSecondary: "View Services",
+  });
+  const [coreValues, setCoreValues] = useState([
+    {
+      icon: "🤝",
+      title: "Unity",
+      desc: "One cohesive team working together with shared goals and clear communication.",
+      color: "from-blue-600 to-blue-800",
+    },
+    {
+      icon: "🎯",
+      title: "Precision",
+      desc: "Meticulous attention to detail and accuracy in every task and interaction.",
+      color: "from-purple-600 to-purple-800",
+    },
+    {
+      icon: "💎",
+      title: "Integrity",
+      desc: "Honest, ethical practices and transparent communication in all we do.",
+      color: "from-blue-600 to-cyan-700",
+    },
+    {
+      icon: "🚀",
+      title: "Impact",
+      desc: "Delivering measurable results that drive meaningful business transformation.",
+      color: "from-slate-600 to-blue-700",
+    },
+  ]);
+  const [aboutData, setAboutData] = useState({
+    description:
+      "United4ContactSolutions delivers modern virtual assistance and customer support that keeps teams focused on what matters most. We blend reliable talent, proven processes, and smart tools to handle customer communications, admin tasks, and operational follow through so every client interaction feels seamless and on brand.",
+    mission:
+      "At United for Contact Solutions, our mission is to deliver exceptional virtual assistance and customer support services that empower businesses to operate efficiently and grow confidently. We are committed to providing reliable, high-quality solutions through teamwork, professionalism and a client-focused approach that ensures seamless communication and outstanding results.",
+    vision:
+      "Our vision is to become a trusted global partner in virtual assistance by setting the standard for excellence, innovation, and dependability. We aspire to build a future where businesses of all sizes can rely on our expertise to simplify their operations, elevate customer experiences, and achieve long-term success.",
+  });
+  const [services, setServices] = useState([
+    {
+      title: "General Virtual Assistance",
+      desc: "Comprehensive virtual support services to streamline your daily operations",
+      icon: "🤝",
+      features: ["Administrative tasks", "Email management", "Calendar scheduling", "Data entry"],
+    },
+    {
+      title: "Marketing and Content",
+      desc: "Strategic marketing solutions and engaging content creation services",
+      icon: "📈",
+      features: ["Content creation", "Social media management", "SEO optimization", "Brand strategy"],
+    },
+    {
+      title: "E-Commerce and Retail",
+      desc: "End-to-end e-commerce support and retail management solutions",
+      icon: "🛒",
+      features: ["Product listings", "Inventory management", "Order processing", "Customer service"],
+    },
+  ]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load data from Supabase
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        // Load Header
+        const headerRes = await fetch("/api/content/header");
+        if (headerRes.ok) {
+          const header = await headerRes.json();
+          if (header) {
+            setHeaderData({
+              companyName: header.company_name || "United4ContactSolutions",
+              tagline: header.tagline || "Unity • Precision • Integrity • Impact",
+            });
+          }
+        }
+
+        // Load Hero
+        const heroRes = await fetch("/api/content/hero");
+        if (heroRes.ok) {
+          const hero = await heroRes.json();
+          if (hero) {
+            setHeroData({
+              headline: hero.headline || "We Build Solutions That Drive Results",
+              subheadline: hero.subheadline || "Connecting Every Step",
+              description: hero.description || "",
+              ctaPrimary: hero.cta_primary || "Schedule Consultation",
+              ctaSecondary: hero.cta_secondary || "View Services",
+            });
+          }
+        }
+
+        // Load Core Values
+        const coreValuesRes = await fetch("/api/content/core-values");
+        if (coreValuesRes.ok) {
+          const values = await coreValuesRes.json();
+          if (values && values.length > 0) {
+            setCoreValues(
+              values.map((v: any) => ({
+                icon: v.icon,
+                title: v.title,
+                desc: v.description,
+                color: v.color,
+              }))
+            );
+          }
+        }
+
+        // Load About
+        const aboutRes = await fetch("/api/content/about");
+        if (aboutRes.ok) {
+          const about = await aboutRes.json();
+          if (about) {
+            setAboutData({
+              description: about.description || "",
+              mission: about.mission || "",
+              vision: about.vision || "",
+            });
+          }
+        }
+
+        // Load Services
+        const servicesRes = await fetch("/api/content/services");
+        if (servicesRes.ok) {
+          const servicesData = await servicesRes.json();
+          if (servicesData && servicesData.length > 0) {
+            setServices(
+              servicesData.map((s: any) => ({
+                title: s.title,
+                desc: s.description,
+                icon: s.icon,
+                features: s.features || [],
+              }))
+            );
+          }
+        }
+
+        // Load Team
+        const teamRes = await fetch("/api/content/team");
+        if (teamRes.ok) {
+          const teamData = await teamRes.json();
+          if (teamData && teamData.length > 0) {
+            setTeamMembers(
+              teamData.map((t: any) => ({
+                name: t.name,
+                role: t.role,
+                icon: t.icon,
+                bio: t.bio,
+                skills: t.skills || [],
+                experience: t.experience,
+                email: t.email,
+                projects: t.projects || [],
+                photo: "",
+              }))
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error loading content:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadContent();
+  }, []);
+
   useEffect(() => {
     const handleScroll = () => {
       const sections = ["home", "team", "projects", "contacts"];
@@ -579,80 +755,7 @@ export default function Home() {
     }
   };
 
-  const teamMembers: TeamMember[] = [
-    {
-      name: "Niño Nesperos",
-      role: "CEO & Founder",
-      icon: "👨‍💼",
-      bio: "Visionary leader dedicated to delivering exceptional virtual assistance services. With extensive experience in business operations and client relations, Niño drives the company's mission to empower businesses through reliable support solutions.",
-      skills: ["Strategic Leadership", "Business Development", "Client Relations", "Operations Management"],
-      experience: "10+ years",
-      email: "nino.nesperos@united4contactsolutions.com",
-      projects: ["Company Foundation", "Service Excellence Program", "Client Success Initiative"],
-      photo: "",
-    },
-    {
-      name: "Jason Pada",
-      role: "IT General Services",
-      icon: "👨‍💻",
-      bio: "Experienced IT specialist focused on providing comprehensive technical support, infrastructure management, and smooth operations across all client systems.",
-      skills: ["IT Support", "Infrastructure Management", "Systems Administration", "Process Optimization"],
-      experience: "8+ years",
-      email: "jason.pada@united4contactsolutions.com",
-      projects: ["Infrastructure Modernization", "Security Compliance", "IT Service Desk Optimization"],
-      photo: "",
-    },
-    {
-      name: "Louis Gascon",
-      role: "Customer Expert Support",
-      icon: "🤝",
-      bio: "Customer support expert focused on delivering outstanding service experiences and ensuring every client interaction reflects our high standards.",
-      skills: ["Customer Support", "Client Relations", "Problem Resolution", "Communication"],
-      experience: "6+ years",
-      email: "louis.gascon@united4contactsolutions.com",
-      projects: ["Customer Experience Revamp", "Support Excellence Initiative", "Client Loyalty Program"],
-      photo: "",
-    }
-  ];
-
-  const services = [
-    {
-      title: "General Virtual Assistance",
-      desc: "Comprehensive virtual support services to streamline your daily operations",
-      icon: "🤝",
-      features: ["Administrative tasks", "Email management", "Calendar scheduling", "Data entry"],
-    },
-    {
-      title: "Marketing and Content",
-      desc: "Strategic marketing solutions and engaging content creation services",
-      icon: "📈",
-      features: ["Content creation", "Social media management", "SEO optimization", "Brand strategy"],
-    },
-    {
-      title: "E-Commerce and Retail",
-      desc: "End-to-end e-commerce support and retail management solutions",
-      icon: "🛒",
-      features: ["Product listings", "Inventory management", "Order processing", "Customer service"],
-    },
-    {
-      title: "Administrative and Support",
-      desc: "Professional administrative services and comprehensive business support",
-      icon: "📋",
-      features: ["Document management", "QuickBooks support", "Process optimization", "Reporting"],
-    },
-    {
-      title: "Automotive Sales & Aftersales Support",
-      desc: "Specialized automotive industry support for sales and customer service",
-      icon: "🚗",
-      features: ["Lead management", "Customer follow-up", "Service scheduling", "Parts coordination"],
-    },
-    {
-      title: "Web Development",
-      desc: "Custom websites and web applications built with modern technologies",
-      icon: "🌐",
-      features: ["Responsive websites", "Custom applications", "E-commerce platforms", "Maintenance"],
-    },
-  ];
+  // Services and team are now loaded from state (set above)
 
   useEffect(() => {
     // Handle body overflow when modal opens/closes
@@ -786,10 +889,10 @@ export default function Home() {
         <div className="absolute top-0 left-0 w-full px-6 pt-6 z-30">
           <div className="max-w-7xl mx-auto bg-black/40 backdrop-blur-md border border-white/5 rounded-2xl px-6 py-4 flex flex-col items-center gap-2">
             <h2 className="text-white text-2xl md:text-3xl font-semibold tracking-tight">
-              United4ContactSolutions
+              {headerData.companyName}
             </h2>
             <p className="text-gray-300 text-xs md:text-sm text-center uppercase tracking-[0.2em]">
-              Connecting Businesses • Delivering Excellence • Building Success
+              {headerData.tagline}
             </p>
           </div>
         </div>
@@ -827,8 +930,16 @@ export default function Home() {
           </div>
 
           <h1 className="text-white text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8 tracking-tight">
-            We Build Solutions That Drive{" "}
-            <span className="text-blue-400 italic">Results</span>
+            {heroData.headline.split(" ").map((word, i, arr) =>
+              i === arr.length - 1 ? (
+                <span key={i}>
+                  {" "}
+                  <span className="text-blue-400 italic">{word}</span>
+                </span>
+              ) : (
+                <span key={i}>{word} </span>
+              )
+            )}
           </h1>
           
           <div className="flex flex-col items-center mb-12">
@@ -842,7 +953,7 @@ export default function Home() {
               ))}
             </div>
             <p className="text-gray-400 text-xs md:text-sm mt-4 tracking-[0.4em] uppercase">
-              Connecting Every Step
+              {heroData.subheadline}
             </p>
           </div>
 
@@ -863,7 +974,7 @@ export default function Home() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              Schedule Consultation
+              {heroData.ctaPrimary}
             </button>
             <button 
               onClick={() => {
@@ -880,7 +991,7 @@ export default function Home() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-              View Services
+              {heroData.ctaSecondary}
             </button>
           </div>
         </div>
@@ -894,40 +1005,19 @@ export default function Home() {
               Core Values
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                {
-                  icon: "🤝",
-                  title: "Unified Team",
-                  desc: "One cohesive team working toward your success with shared accountability and clear communication.",
-                  color: "from-blue-600 to-blue-800",
-                },
-                {
-                  icon: "🎯",
-                  title: "Results-Focused",
-                  desc: "Data-driven approach with measurable outcomes and continuous optimization for maximum ROI.",
-                  color: "from-slate-600 to-slate-800",
-                },
-                {
-                  icon: "📞",
-                  title: "Always Connected",
-                  desc: "24/7 availability with multiple communication channels ensuring seamless business continuity.",
-                  color: "from-blue-600 to-cyan-700",
-                },
-                {
-                  icon: "💡",
-                  title: "Innovative Solutions",
-                  desc: "Cutting-edge tools and methodologies tailored to solve complex business challenges efficiently.",
-                  color: "from-slate-600 to-blue-700",
-                },
-              ].map((value) => (
+              {coreValues.map((value) => (
                 <div
                   key={value.title}
                   className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 text-center group hover:bg-gray-800/70 transition-all duration-300"
                 >
                   <div
-                    className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${value.color} flex items-center justify-center text-2xl shadow-lg`}
+                    className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${value.color} flex items-center justify-center text-2xl shadow-lg overflow-hidden`}
                   >
-                    {value.icon}
+                    {value.icon && value.icon.startsWith("data:image") ? (
+                      <img src={value.icon} alt={value.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{value.icon}</span>
+                    )}
                   </div>
                   <h3 className="text-white text-xl font-semibold mb-3">{value.title}</h3>
                   <p className="text-gray-300 text-sm leading-relaxed">{value.desc}</p>
@@ -938,7 +1028,7 @@ export default function Home() {
 
           <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">About Us</h2>
           <p className="text-white/70 text-justify mb-16 max-w-3xl mx-auto text-lg leading-relaxed">
-            United4ContactSolutions delivers modern virtual assistance and customer support that keeps teams focused on what matters most. We blend reliable talent, proven processes, and smart tools to handle customer communications, admin tasks, and operational follow-through—so every client interaction feels seamless and on brand.
+            {aboutData.description}
           </p>
           
           {/* Mission & Vision Cards */}
@@ -962,7 +1052,7 @@ export default function Home() {
                 
                 {/* Content */}
                 <p className="text-white/90 leading-relaxed text-lg relative z-10 text-justify">
-                  At United for Contact Solutions, our mission is to deliver exceptional virtual assistance and customer support services that empower businesses to operate efficiently and grow confidently. We are committed to providing reliable, high-quality solutions through teamwork, professionalism, and a client-focused approach that ensures seamless communication and outstanding results.
+                  {aboutData.mission}
                 </p>
                 
                 {/* Decorative corner element */}
@@ -989,7 +1079,7 @@ export default function Home() {
                 
                 {/* Content */}
                 <p className="text-white/90 leading-relaxed text-lg relative z-10 text-justify">
-                  Our vision is to become a trusted global partner in virtual assistance by setting the standard for excellence, innovation, and dependability. We aspire to build a future where businesses of all sizes can rely on our expertise to simplify their operations, elevate customer experiences, and achieve long-term success.
+                  {aboutData.vision}
                 </p>
                 
                 {/* Decorative corner element */}
@@ -1031,7 +1121,13 @@ export default function Home() {
                 onClick={() => handleServiceClick(service)}
                 className="text-left bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all duration-300 hover:scale-105 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:outline-none"
               >
-                <div className="text-5xl mb-4">{service.icon}</div>
+                <div className="text-5xl mb-4">
+                  {service.icon && service.icon.startsWith("data:image") ? (
+                    <img src={service.icon} alt={service.title} className="w-16 h-16 object-cover rounded-lg" />
+                  ) : (
+                    <span>{service.icon}</span>
+                  )}
+                </div>
                 <h3 className="text-white text-xl font-semibold mb-3">{service.title}</h3>
                 <p className="text-white/70">{service.desc}</p>
                 <span className="mt-6 inline-flex items-center gap-2 text-purple-300 text-sm font-semibold">
@@ -1069,7 +1165,11 @@ export default function Home() {
 
             <div className="p-8 space-y-6">
               <div className="flex items-start gap-4">
-                <div className="text-6xl">{selectedService.icon}</div>
+                {selectedService.icon && selectedService.icon.startsWith("data:image") ? (
+                  <img src={selectedService.icon} alt={selectedService.title} className="w-16 h-16 object-cover rounded-lg" />
+                ) : (
+                  <div className="text-6xl">{selectedService.icon}</div>
+                )}
                 <div>
                   <h3 className="text-white text-3xl font-bold mb-2">{selectedService.title}</h3>
                   <p className="text-white/70">{selectedService.desc}</p>
@@ -1131,7 +1231,7 @@ export default function Home() {
             <p className="text-white/70 max-w-4xl mx-auto">
               Partner with our experts to elevate your operations. We work closely with every client to deliver practical
               improvements that make daily workflows smarter and more efficient.
-            </p>
+          </p>
         </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-items-center">
             {teamMembers.map((member) => (
@@ -1141,7 +1241,11 @@ export default function Home() {
                 className="group cursor-pointer rounded-[32px] overflow-hidden bg-white shadow-2xl flex flex-col w-full max-w-xs"
               >
                 <div className="relative h-64 w-full bg-gradient-to-br from-gray-200 via-gray-100 to-white flex items-center justify-center">
-                  <div className="text-6xl">{member.icon}</div>
+                  {member.icon && member.icon.startsWith("data:image") ? (
+                    <img src={member.icon} alt={member.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-6xl">{member.icon}</div>
+                  )}
                 </div>
                 <div className="p-6 text-center">
                   <h3 className="text-black text-lg font-semibold">{member.name}</h3>
