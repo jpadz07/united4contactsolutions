@@ -201,6 +201,7 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Handle mobile sidebar
   useEffect(() => {
@@ -555,12 +556,20 @@ export default function AdminDashboard() {
   }, []);
 
   const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
     clearSession();
     // Clear URL parameters on logout
     if (typeof window !== "undefined") {
       window.history.replaceState({}, "", "/admin");
     }
     router.push("/admin");
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
 
   const handleFileUpload = (file: File, callback: (url: string) => void) => {
@@ -1597,6 +1606,48 @@ export default function AdminDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={cancelLogout}
+        >
+          <div 
+            className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50 rounded-2xl p-6 md:p-8 max-w-md w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <LogoutIcon />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-white">Confirm Logout</h3>
+                <p className="text-sm text-gray-400">Are you sure you want to sign out?</p>
+              </div>
+            </div>
+            
+            <p className="text-gray-300 mb-6">
+              You will need to sign in again to access the dashboard. Any unsaved changes will be lost.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={cancelLogout}
+                className="flex-1 px-4 py-2.5 bg-gray-700/50 hover:bg-gray-700 border border-gray-600/50 rounded-xl text-white font-medium transition-all duration-200 hover:border-gray-500"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-xl text-white font-medium transition-all duration-200 shadow-lg shadow-red-500/20 hover:shadow-red-500/30"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
