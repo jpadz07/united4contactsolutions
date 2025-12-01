@@ -2,6 +2,22 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { isAuthenticated, clearSession, getSession, extendSession } from "@/lib/auth/session";
+import { getTokenFromUrl, validateUrlToken, generateSecureDashboardUrl } from "@/lib/auth/url-encryption";
+import {
+  OverviewIcon,
+  TargetIcon,
+  StarIcon,
+  BookIcon,
+  SettingsIcon,
+  UsersIcon,
+  BriefcaseIcon,
+  ChatIcon,
+  LogoutIcon,
+  ServicesIcon,
+  SaveIcon,
+  MetricsIcon,
+} from "./components/Icons";
 
 // Default data matching the landing page structure
 const defaultHeader = {
@@ -184,6 +200,98 @@ export default function AdminDashboard() {
   const [status, setStatus] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Handle mobile sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const session = getSession();
+      
+      if (!session || !isAuthenticated()) {
+        router.push("/admin");
+        return;
+      }
+
+      // Validate URL token first
+      const urlToken = getTokenFromUrl();
+      if (!urlToken || !validateUrlToken(session.token, urlToken)) {
+        // Token missing or invalid - redirect to login
+        clearSession();
+        router.push("/admin");
+        return;
+      }
+
+      // If URL doesn't have token, redirect to secure URL
+      if (!urlToken) {
+        const secureUrl = generateSecureDashboardUrl(session.token);
+        router.replace(secureUrl);
+        return;
+      }
+
+      // Verify session with server
+      try {
+        const response = await fetch("/api/auth/verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token: session.token }),
+        });
+
+        const data = await response.json();
+
+        if (!data.authenticated) {
+          clearSession();
+          router.push("/admin");
+          return;
+        }
+
+        // Extend session on activity
+        extendSession();
+      } catch (error) {
+        console.error("Auth verification failed:", error);
+        clearSession();
+        router.push("/admin");
+        return;
+      }
+
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Extend session on user activity
+  useEffect(() => {
+    if (isCheckingAuth) return;
+
+    const activityHandler = () => {
+      extendSession();
+    };
+
+    const events = ["mousedown", "keydown", "scroll", "touchstart"];
+    events.forEach((event) => {
+      window.addEventListener(event, activityHandler);
+    });
+
+    return () => {
+      events.forEach((event) => {
+        window.removeEventListener(event, activityHandler);
+      });
+    };
+  }, [isCheckingAuth]);
 
   const handleTabChange = (tab: TabType) => {
     if (tab === activeTab) return;
@@ -297,10 +405,15 @@ export default function AdminDashboard() {
           return;
       }
 
+      // Get session token for authentication
+      const session = getSession();
+      const authToken = session?.token;
+
       response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-auth-token": authToken || "",
         },
         body: JSON.stringify(body),
       });
@@ -442,6 +555,11 @@ export default function AdminDashboard() {
   }, []);
 
   const handleLogout = () => {
+    clearSession();
+    // Clear URL parameters on logout
+    if (typeof window !== "undefined") {
+      window.history.replaceState({}, "", "/admin");
+    }
     router.push("/admin");
   };
 
@@ -460,61 +578,99 @@ export default function AdminDashboard() {
   };
 
   const navItems = [
-    { id: "overview" as TabType, label: "Overview", icon: "📊" },
-    { id: "header" as TabType, label: "Header & Hero", icon: "🎯" },
-    { id: "core-values" as TabType, label: "Core Values", icon: "⭐" },
-    { id: "about" as TabType, label: "About Us", icon: "📖" },
-    { id: "services" as TabType, label: "Services", icon: "⚙️" },
-    { id: "team" as TabType, label: "Team", icon: "👥" },
-    { id: "projects" as TabType, label: "Projects", icon: "💼" },
-    { id: "testimonials" as TabType, label: "Testimonials", icon: "💬" },
-    { id: "settings" as TabType, label: "Settings", icon: "⚙️" },
+    { id: "overview" as TabType, label: "Overview", icon: OverviewIcon },
+    { id: "header" as TabType, label: "Header & Hero", icon: TargetIcon },
+    { id: "core-values" as TabType, label: "Core Values", icon: StarIcon },
+    { id: "about" as TabType, label: "About Us", icon: BookIcon },
+    { id: "services" as TabType, label: "Services", icon: ServicesIcon },
+    { id: "team" as TabType, label: "Team", icon: UsersIcon },
+    { id: "projects" as TabType, label: "Projects", icon: BriefcaseIcon },
+    { id: "testimonials" as TabType, label: "Testimonials", icon: ChatIcon },
+    { id: "settings" as TabType, label: "Settings", icon: SettingsIcon },
   ];
 
+  // Show loading while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Verifying authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex relative">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } bg-gray-900/80 backdrop-blur-xl border-r border-gray-800/50 transition-all duration-300 flex flex-col fixed h-screen z-40`}
+          sidebarOpen ? "w-64 translate-x-0" : "w-20 -translate-x-full md:translate-x-0"
+        } bg-gray-900/80 backdrop-blur-xl border-r border-gray-800/50 transition-all duration-300 flex flex-col fixed h-screen z-40 left-0 top-0`}
       >
         {/* Logo/Header */}
-        <div className="p-6 border-b border-gray-800/50 flex items-center justify-between">
+        <div className={`p-4 md:p-6 border-b border-gray-800/50 bg-gradient-to-r from-gray-900/50 to-transparent flex items-center ${sidebarOpen ? "justify-between" : "justify-center"} min-h-[80px]`}>
           {sidebarOpen && (
-            <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                U4CS Admin
-              </h1>
-              <p className="text-xs text-gray-400 mt-1">Dashboard</p>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="relative flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30">
+                  U4
+                </div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg md:text-xl font-bold text-white truncate">
+                  Dashboard
+                </h1>
+                <p className="text-xs text-gray-400 mt-0.5">Admin Panel</p>
+              </div>
+            </div>
+          )}
+          {!sidebarOpen && (
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30">
+                U4
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900"></div>
             </div>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-800/50 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-800/50 rounded-lg transition-all duration-200 flex-shrink-0 text-gray-400 hover:text-white hover:scale-110 md:flex hidden"
             aria-label="Toggle sidebar"
           >
-            <span className="text-xl">{sidebarOpen ? "◀" : "▶"}</span>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarOpen ? "M15 19l-7-7 7-7" : "M9 5l7 7-7 7"} />
+            </svg>
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-3 md:p-4 space-y-2 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => handleTabChange(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ease-out transform ${
+              className={`w-full flex items-center ${sidebarOpen ? "justify-start" : "justify-center"} gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-300 ease-out transform ${
                 activeTab === item.id
                   ? "bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 text-blue-400 scale-[1.02] shadow-lg shadow-blue-500/20"
                   : "hover:bg-gray-800/50 text-gray-300 hover:scale-[1.01] active:scale-[0.98]"
               }`}
             >
-              <span className={`text-xl flex-shrink-0 transition-transform duration-300 ${activeTab === item.id ? "scale-110" : ""}`}>
-                {item.icon}
+              <span className={`flex-shrink-0 transition-transform duration-300 ${activeTab === item.id ? "scale-110" : ""}`}>
+                <item.icon />
               </span>
               {sidebarOpen && (
-                <span className={`font-medium transition-all duration-300 ${activeTab === item.id ? "font-semibold" : ""}`}>
+                <span className={`text-sm md:text-base font-medium transition-all duration-300 truncate ${activeTab === item.id ? "font-semibold" : ""}`}>
                   {item.label}
                 </span>
               )}
@@ -523,31 +679,58 @@ export default function AdminDashboard() {
         </nav>
 
         {/* User Section */}
-        <div className="p-4 border-t border-gray-800/50">
+        <div className="p-3 md:p-4 border-t border-gray-800/50 flex-shrink-0">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-600/20 text-red-400 transition-all duration-200"
+            className={`w-full flex items-center ${sidebarOpen ? "justify-start" : "justify-center"} gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-xl hover:bg-red-600/20 text-red-400 transition-all duration-200`}
           >
-            <span className="text-xl">🚪</span>
-            {sidebarOpen && <span className="font-medium">Logout</span>}
+            <span className="flex-shrink-0">
+              <LogoutIcon />
+            </span>
+            {sidebarOpen && <span className="text-sm md:text-base font-medium truncate">Logout</span>}
           </button>
         </div>
       </aside>
 
+      {/* Mobile Menu Button */}
+      {!sidebarOpen && (
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="fixed top-4 left-4 z-50 p-3 bg-gradient-to-br from-gray-900/90 to-gray-800/90 backdrop-blur-md border border-gray-700/50 rounded-xl text-white md:hidden shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          aria-label="Open menu"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      )}
+
       {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-20"}`}>
-        <div className="p-8">
+      <main
+        className={`flex-1 transition-all duration-300 min-w-0 overflow-x-hidden ${
+          sidebarOpen ? "md:ml-64" : "md:ml-20"
+        }`}
+      >
+        <div className="p-4 md:p-6 lg:p-8">
           {/* Top Bar */}
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className={`transition-all duration-300 ${isTransitioning ? "opacity-50" : "opacity-100"}`}>
-              <h2 className="text-3xl font-bold mb-2 transition-all duration-300">
-                {navItems.find((item) => item.id === activeTab)?.label || "Dashboard"}
-              </h2>
-              <p className="text-gray-400">Manage your landing page content and settings</p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full"></div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold transition-all duration-300">
+                    {navItems.find((item) => item.id === activeTab)?.label || "Dashboard"}
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-1">Manage your landing page content and settings</p>
+                </div>
+              </div>
             </div>
             {status && (
-              <div className="px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-lg text-green-400 text-sm animate-in fade-in duration-300">
-                {status}
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10 border border-green-500/30 rounded-lg text-green-400 text-sm animate-in fade-in duration-300 backdrop-blur-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>{status}</span>
               </div>
             )}
           </div>
@@ -564,43 +747,52 @@ export default function AdminDashboard() {
                 {/* Metrics Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
-                    { label: "Published Services", value: services.length, icon: "⚙️", color: "from-blue-500 to-cyan-500" },
-                    { label: "Team Members", value: team.length, icon: "👥", color: "from-purple-500 to-pink-500" },
-                    { label: "Featured Projects", value: projects.length, icon: "💼", color: "from-green-500 to-emerald-500" },
-                    { label: "Testimonials", value: testimonials.length, icon: "💬", color: "from-orange-500 to-red-500" },
+                    { label: "Published Services", value: services.length, iconColor: "blue", color: "from-blue-500 to-cyan-500" },
+                    { label: "Team Members", value: team.length, iconColor: "purple", color: "from-purple-500 to-pink-500" },
+                    { label: "Featured Projects", value: projects.length, iconColor: "green", color: "from-green-500 to-emerald-500" },
+                    { label: "Testimonials", value: testimonials.length, iconColor: "orange", color: "from-orange-500 to-red-500" },
                   ].map((metric) => (
                     <div
                       key={metric.label}
-                      className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-gray-600/50 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10"
+                      className="group bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-1"
                     >
                       <div className="flex items-center justify-between mb-4">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${metric.color} flex items-center justify-center text-2xl`}>
-                          {metric.icon}
+                        <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${metric.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                          <MetricsIcon color={metric.iconColor} />
                         </div>
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                       </div>
-                      <p className="text-gray-400 text-sm mb-1">{metric.label}</p>
-                      <p className="text-3xl font-bold">{metric.value}</p>
+                      <p className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-2">{metric.label}</p>
+                      <p className="text-3xl font-bold text-white mb-1">{metric.value}</p>
+                      <p className="text-xs text-gray-500">Active items</p>
                     </div>
                   ))}
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6">
-                  <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+                <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 lg:p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-semibold text-white mb-1">Quick Actions</h3>
+                      <p className="text-sm text-gray-400">Navigate to content sections</p>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                      { label: "Edit Header & Hero", tab: "header" as TabType, icon: "🎯" },
-                      { label: "Update Core Values", tab: "core-values" as TabType, icon: "⭐" },
-                      { label: "Manage Services", tab: "services" as TabType, icon: "⚙️" },
-                      { label: "Update Team", tab: "team" as TabType, icon: "👥" },
+                      { label: "Edit Header & Hero", tab: "header" as TabType, icon: TargetIcon },
+                      { label: "Update Core Values", tab: "core-values" as TabType, icon: StarIcon },
+                      { label: "Manage Services", tab: "services" as TabType, icon: ServicesIcon },
+                      { label: "Update Team", tab: "team" as TabType, icon: UsersIcon },
                     ].map((action) => (
                       <button
                         key={action.tab}
                         onClick={() => handleTabChange(action.tab)}
-                        className="flex items-center gap-3 p-4 bg-gray-900/50 border border-gray-700/30 rounded-xl hover:border-blue-500/50 hover:bg-gray-900/70 transition-all duration-200 text-left"
+                        className="group flex items-center gap-3 p-4 bg-gray-900/50 border border-gray-700/30 rounded-xl hover:border-blue-500/50 hover:bg-gray-900/70 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-200 text-left"
                       >
-                        <span className="text-2xl">{action.icon}</span>
-                        <span className="font-medium">{action.label}</span>
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600/20 to-cyan-600/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <action.icon />
+                        </div>
+                        <span className="font-medium text-sm">{action.label}</span>
                       </button>
                     ))}
                   </div>
@@ -612,24 +804,25 @@ export default function AdminDashboard() {
             {activeTab === "header" && (
               <div className="space-y-6">
                 {/* Header Section */}
-                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                  <div className="flex items-center justify-between mb-6">
+                <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 lg:p-8 shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-700/30">
                     <div>
-                      <h3 className="text-2xl font-semibold mb-2">Header Content</h3>
-                      <p className="text-gray-400">Update company name and tagline</p>
+                      <h3 className="text-xl md:text-2xl font-semibold mb-1 text-white">Header Content</h3>
+                      <p className="text-sm text-gray-400">Update company name and tagline</p>
                     </div>
                     <button
                       onClick={() => handleSave("Header")}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
                     >
-                      Save Header
+                      <SaveIcon />
+                      <span>Save Header</span>
                     </button>
                   </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
                       <input
-                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                         value={header.companyName}
                         onChange={(e) => setHeader({ ...header, companyName: e.target.value })}
                       />
@@ -637,7 +830,7 @@ export default function AdminDashboard() {
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Tagline</label>
                       <input
-                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                         value={header.tagline}
                         onChange={(e) => setHeader({ ...header, tagline: e.target.value })}
                       />
@@ -646,24 +839,25 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Hero Section */}
-                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                  <div className="flex items-center justify-between mb-6">
+                <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 lg:p-8 shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-700/30">
                     <div>
-                      <h3 className="text-2xl font-semibold mb-2">Hero Section</h3>
-                      <p className="text-gray-400">Update main hero content and CTAs</p>
+                      <h3 className="text-xl md:text-2xl font-semibold mb-1 text-white">Hero Section</h3>
+                      <p className="text-sm text-gray-400">Update main hero content and CTAs</p>
                     </div>
                     <button
                       onClick={() => handleSave("Hero Section")}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
                     >
-                      Save Hero
+                      <SaveIcon />
+                      <span>Save Hero</span>
                     </button>
                   </div>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Headline</label>
                       <input
-                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                         value={hero.headline}
                         onChange={(e) => setHero({ ...hero, headline: e.target.value })}
                       />
@@ -671,7 +865,7 @@ export default function AdminDashboard() {
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Subheadline</label>
                       <input
-                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                         value={hero.subheadline}
                         onChange={(e) => setHero({ ...hero, subheadline: e.target.value })}
                       />
@@ -680,7 +874,7 @@ export default function AdminDashboard() {
                       <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
                       <textarea
                         rows={4}
-                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
+                        className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
                         value={hero.description}
                         onChange={(e) => setHero({ ...hero, description: e.target.value })}
                       ></textarea>
@@ -689,7 +883,7 @@ export default function AdminDashboard() {
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">Primary CTA Button</label>
                         <input
-                          className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                          className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                           value={hero.ctaPrimary}
                           onChange={(e) => setHero({ ...hero, ctaPrimary: e.target.value })}
                         />
@@ -697,7 +891,7 @@ export default function AdminDashboard() {
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">Secondary CTA Button</label>
                         <input
-                          className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                          className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
                           value={hero.ctaSecondary}
                           onChange={(e) => setHero({ ...hero, ctaSecondary: e.target.value })}
                         />
@@ -710,17 +904,18 @@ export default function AdminDashboard() {
 
             {/* Core Values Tab */}
             {activeTab === "core-values" && (
-              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                <div className="flex items-center justify-between mb-6">
+              <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 lg:p-8 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-700/30">
                   <div>
-                    <h3 className="text-2xl font-semibold mb-2">Core Values</h3>
-                    <p className="text-gray-400">Update your company's core values</p>
+                    <h3 className="text-xl md:text-2xl font-semibold mb-1 text-white">Core Values</h3>
+                    <p className="text-sm text-gray-400">Update your company's core values</p>
                   </div>
                   <button
                     onClick={() => handleSave("Core Values")}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
                   >
-                    Save Core Values
+                    <SaveIcon />
+                    <span>Save Core Values</span>
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -813,17 +1008,18 @@ export default function AdminDashboard() {
 
             {/* About Us Tab */}
             {activeTab === "about" && (
-              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                <div className="flex items-center justify-between mb-6">
+              <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 lg:p-8 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-700/30">
                   <div>
-                    <h3 className="text-2xl font-semibold mb-2">About Us Section</h3>
-                    <p className="text-gray-400">Update About Us, Mission, and Vision content</p>
+                    <h3 className="text-xl md:text-2xl font-semibold mb-1 text-white">About Us Section</h3>
+                    <p className="text-sm text-gray-400">Update About Us, Mission, and Vision content</p>
                   </div>
                   <button
                     onClick={() => handleSave("About Us")}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
                   >
-                    Save About Us
+                    <SaveIcon />
+                    <span>Save About Us</span>
                   </button>
                 </div>
                 <div className="space-y-6">
@@ -831,7 +1027,7 @@ export default function AdminDashboard() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">About Us Description</label>
                     <textarea
                       rows={4}
-                      className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
+                      className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
                       value={about.description}
                       onChange={(e) => setAbout({ ...about, description: e.target.value })}
                     ></textarea>
@@ -840,7 +1036,7 @@ export default function AdminDashboard() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">Mission Statement</label>
                     <textarea
                       rows={5}
-                      className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
+                      className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
                       value={about.mission}
                       onChange={(e) => setAbout({ ...about, mission: e.target.value })}
                     ></textarea>
@@ -849,7 +1045,7 @@ export default function AdminDashboard() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">Vision Statement</label>
                     <textarea
                       rows={5}
-                      className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
+                      className="w-full bg-gray-900/50 border border-gray-700/50 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all resize-none"
                       value={about.vision}
                       onChange={(e) => setAbout({ ...about, vision: e.target.value })}
                     ></textarea>
@@ -861,18 +1057,19 @@ export default function AdminDashboard() {
             {/* Services Tab */}
             {activeTab === "services" && (
               <div className="space-y-6">
-                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                  <div className="flex items-center justify-between mb-6">
+                <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 lg:p-8 shadow-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-700/30">
                     <div>
-                      <h3 className="text-2xl font-semibold mb-2">Services Management</h3>
-                      <p className="text-gray-400">Add, edit, or remove services from your landing page</p>
+                      <h3 className="text-xl md:text-2xl font-semibold mb-1 text-white">Services Management</h3>
+                      <p className="text-sm text-gray-400">Add, edit, or remove services from your landing page</p>
                     </div>
-                    <button
-                      onClick={() => handleSave("Services")}
-                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
-                    >
-                      Save All Services
-                    </button>
+                      <button
+                        onClick={() => handleSave("Services")}
+                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
+                      >
+                        <SaveIcon />
+                        <span>Save All Services</span>
+                      </button>
                   </div>
                   <div className="space-y-4">
                     {services.map((service, idx) => (
@@ -980,17 +1177,18 @@ export default function AdminDashboard() {
 
             {/* Team Tab */}
             {activeTab === "team" && (
-              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
-                <div className="flex items-center justify-between mb-6">
+              <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-6 lg:p-8 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-gray-700/30">
                   <div>
-                    <h3 className="text-2xl font-semibold mb-2">Team Directory</h3>
-                    <p className="text-gray-400">Manage team member information</p>
+                    <h3 className="text-xl md:text-2xl font-semibold mb-1 text-white">Team Directory</h3>
+                    <p className="text-sm text-gray-400">Manage team member information</p>
                   </div>
                   <button
                     onClick={() => handleSave("Team")}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
                   >
-                    Save Team Info
+                    <SaveIcon />
+                    <span>Save Team Info</span>
                   </button>
                 </div>
                 <div className="space-y-6">
@@ -1146,9 +1344,10 @@ export default function AdminDashboard() {
                   </div>
                   <button
                     onClick={() => handleSave("Projects")}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
                   >
-                    Save Projects
+                    <SaveIcon />
+                    <span>Save Projects</span>
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1218,9 +1417,10 @@ export default function AdminDashboard() {
                   </div>
                   <button
                     onClick={() => handleSave("Testimonials")}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl font-medium transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30"
                   >
-                    Save Testimonials
+                    <SaveIcon />
+                    <span>Save Testimonials</span>
                   </button>
                 </div>
                 <div className="space-y-4">

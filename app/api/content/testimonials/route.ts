@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { verifyRequestAuth } from "@/lib/auth/middleware";
 
 export async function GET() {
   try {
@@ -18,6 +19,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const authResult = verifyRequestAuth(request);
+    if (!authResult.authenticated) {
+      return NextResponse.json({ error: authResult.error || "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { testimonials } = body; // Array of testimonials
 

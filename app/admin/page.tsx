@@ -1,10 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-
-const TEST_EMAIL = "admin@united4contactsolutions.com";
-const TEST_PASSWORD = "SecurePass123!";
+import { useState, useEffect } from "react";
+import { createSession, isAuthenticated, getSession } from "@/lib/auth/session";
+import { generateSecureDashboardUrl } from "@/lib/auth/url-encryption";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -14,19 +13,50 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const session = getSession();
+      if (session) {
+        const secureUrl = generateSecureDashboardUrl(session.token);
+        router.push(secureUrl);
+      }
+    }
+  }, [router]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      if (email.trim().toLowerCase() === TEST_EMAIL && password === TEST_PASSWORD) {
-        router.push("/admin/dashboard");
-      } else {
-        setError("Invalid credentials. Please use the provided test email and password.");
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Invalid credentials");
+        setIsSubmitting(false);
+        return;
       }
+
+      if (data.success && data.session) {
+        // Store session
+        const session = createSession(data.session.email);
+        // Redirect to dashboard with encrypted URL
+        const secureUrl = generateSecureDashboardUrl(session.token);
+        router.push(secureUrl);
+      }
+    } catch (err) {
+      setError("Login failed. Please try again.");
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   return (

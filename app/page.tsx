@@ -582,6 +582,24 @@ export default function Home() {
       icon: "🛒",
       features: ["Product listings", "Inventory management", "Order processing", "Customer service"],
     },
+    {
+      title: "Administrative and Support",
+      desc: "Professional administrative services to keep your business running smoothly",
+      icon: "📋",
+      features: ["Document management", "Report generation", "Meeting coordination", "Project tracking"],
+    },
+    {
+      title: "Automotive Sales & Aftersales Support",
+      desc: "Specialized support for automotive businesses and dealerships",
+      icon: "🚗",
+      features: ["Sales support", "Customer follow-up", "Service scheduling", "Inventory tracking"],
+    },
+    {
+      title: "Web Development",
+      desc: "Custom web solutions and digital platform development",
+      icon: "💻",
+      features: ["Website design", "Frontend development", "Backend integration", "Maintenance"],
+    },
   ]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
