@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { createSession, isAuthenticated, getSession } from "@/lib/auth/session";
+import { createSession, isAuthenticated, getSession, getSavedEmail, wasRememberMeEnabled } from "@/lib/auth/session";
 import { generateSecureDashboardUrl } from "@/lib/auth/url-encryption";
 
 export default function AdminLoginPage() {
@@ -10,8 +10,20 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Load saved email if remember me was previously checked
+  useEffect(() => {
+    const savedEmail = getSavedEmail();
+    const wasRemembered = wasRememberMeEnabled();
+    
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(wasRemembered);
+    }
+  }, []);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -47,8 +59,8 @@ export default function AdminLoginPage() {
       }
 
       if (data.success && data.session) {
-        // Store session
-        const session = createSession(data.session.email);
+        // Store session with remember me preference
+        const session = createSession(data.session.email, rememberMe);
         // Redirect to dashboard with encrypted URL
         const secureUrl = generateSecureDashboardUrl(session.token);
         router.push(secureUrl);
@@ -113,12 +125,14 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <label className="inline-flex items-center gap-2 text-gray-300">
+            <label className="inline-flex items-center gap-2 text-gray-300 cursor-pointer">
               <input
                 type="checkbox"
-                className="rounded border-gray-600 bg-black text-blue-500 focus:ring-blue-500"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-gray-600 bg-black text-blue-500 focus:ring-blue-500 cursor-pointer"
               />
-              Remember me
+              <span>Remember me</span>
             </label>
             <button type="button" className="text-blue-400 hover:text-blue-300">
               Forgot password?
