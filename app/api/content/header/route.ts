@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { company_name, tagline } = body;
+    const { company_name, tagline, logo } = body;
 
     // Upsert (insert or update)
     const { data, error } = await supabaseAdmin
@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
         {
           company_name,
           tagline,
+          logo: logo || null,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" }

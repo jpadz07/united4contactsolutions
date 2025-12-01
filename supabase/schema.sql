@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS header (
   id SERIAL PRIMARY KEY,
   company_name TEXT NOT NULL DEFAULT 'United4ContactSolutions',
   tagline TEXT NOT NULL DEFAULT 'Unity • Precision • Integrity • Impact',
+  logo TEXT, -- base64 data URL or image URL
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

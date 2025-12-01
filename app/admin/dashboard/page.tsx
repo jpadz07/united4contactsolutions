@@ -23,6 +23,7 @@ import {
 const defaultHeader = {
   companyName: "United4ContactSolutions",
   tagline: "Unity • Precision • Integrity • Impact",
+  logo: "",
 };
 
 const defaultHero = {
@@ -308,6 +309,20 @@ export default function AdminDashboard() {
   }, [activeTab]);
 
   const handleSave = async (section: string) => {
+    // Check authentication first
+    const session = getSession();
+    if (!session || !isAuthenticated()) {
+      setStatus("Error: Session expired. Redirecting to login...");
+      setTimeout(() => {
+        clearSession();
+        router.push("/admin");
+      }, 2000);
+      return;
+    }
+
+    // Extend session before saving
+    extendSession();
+
     setStatus(`Saving ${section}...`);
     try {
       let response;
@@ -320,6 +335,7 @@ export default function AdminDashboard() {
           body = {
             company_name: header.companyName,
             tagline: header.tagline,
+            logo: header.logo || null,
           };
           break;
         case "Hero Section":
@@ -406,15 +422,14 @@ export default function AdminDashboard() {
           return;
       }
 
-      // Get session token for authentication
-      const session = getSession();
-      const authToken = session?.token;
+      // Get fresh session token (already checked above)
+      const authToken = session.token;
 
       response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-auth-token": authToken || "",
+          "x-auth-token": authToken,
         },
         body: JSON.stringify(body),
       });
@@ -444,6 +459,7 @@ export default function AdminDashboard() {
             setHeader({
               companyName: headerData.company_name || defaultHeader.companyName,
               tagline: headerData.tagline || defaultHeader.tagline,
+              logo: headerData.logo || "",
             });
           }
         }
@@ -882,6 +898,71 @@ export default function AdminDashboard() {
                     </button>
                   </div>
                   <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Company Logo</label>
+                      <div className="space-y-3">
+                        {header.logo && (header.logo.startsWith("data:image") || header.logo.startsWith("http") || header.logo.startsWith("/")) ? (
+                          <div className="relative">
+                            <img
+                              src={header.logo}
+                              alt="Company Logo"
+                              className="w-32 h-32 object-contain bg-gray-900/50 border border-gray-700/50 rounded-xl p-2"
+                              onError={(e) => {
+                                // If image fails to load, show placeholder
+                                e.currentTarget.style.display = 'none';
+                                const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (placeholder) placeholder.style.display = 'flex';
+                              }}
+                            />
+                            <div className="w-32 h-32 bg-gray-900/50 border border-gray-700/50 rounded-xl flex items-center justify-center text-gray-500 text-sm" style={{ display: 'none' }}>
+                              Invalid image
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setHeader({ ...header, logo: "" })}
+                              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xs transition-colors"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-32 h-32 bg-gray-900/50 border border-gray-700/50 rounded-xl flex items-center justify-center text-gray-500 text-sm">
+                            No logo
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleFileUpload(file, (url) => {
+                                setHeader({ ...header, logo: url });
+                              });
+                            }
+                          }}
+                        />
+                        <p className="text-xs text-gray-500">Upload a logo image (PNG, JPG, SVG recommended). When a logo is uploaded, it will replace the company name in the hero section header.</p>
+                        <div className="mt-2">
+                          <label className="block text-xs font-medium text-gray-400 mb-1">Or enter image URL:</label>
+                          <input
+                            type="text"
+                            placeholder="https://example.com/logo.png"
+                            className="w-full bg-gray-900/50 border border-gray-700/50 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                            value={header.logo && !header.logo.startsWith("data:image") ? header.logo : ""}
+                            onChange={(e) => {
+                              const url = e.target.value.trim();
+                              if (url) {
+                                setHeader({ ...header, logo: url });
+                              } else if (!header.logo || !header.logo.startsWith("data:image")) {
+                                setHeader({ ...header, logo: "" });
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Company Name</label>
                       <input

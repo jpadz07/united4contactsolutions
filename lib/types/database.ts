@@ -2,6 +2,7 @@ export interface HeaderData {
   id?: number;
   company_name: string;
   tagline: string;
+  logo?: string; // base64 data URL or image URL
   updated_at?: string;
 }
 

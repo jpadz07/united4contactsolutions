@@ -110,3 +110,5 @@ Consider migrating to Supabase Auth for:
 - All API write operations are protected
 - Landing page read operations remain public
 
+
+

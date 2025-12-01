@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { coreValueIconMap, serviceIconMap } from "./components/LandingIcons";
 
 // Enhanced Particle Component with Click Effect
 const Particle = ({ 
@@ -492,6 +494,7 @@ const INITIAL_FORM_STATE: ContactFormData = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState("home");
   const [clickedButton, setClickedButton] = useState<string | null>(null);
   const [heroCursor, setHeroCursor] = useState<{ x: number; y: number; visible: boolean }>({
@@ -520,6 +523,7 @@ export default function Home() {
   const [headerData, setHeaderData] = useState({
     companyName: "United4ContactSolutions",
     tagline: "Unity • Precision • Integrity • Impact",
+    logo: "",
   });
   const [heroData, setHeroData] = useState({
     headline: "We Build Solutions That Drive Results",
@@ -616,6 +620,7 @@ export default function Home() {
             setHeaderData({
               companyName: header.company_name || "United4ContactSolutions",
               tagline: header.tagline || "Unity • Precision • Integrity • Impact",
+              logo: header.logo || "",
             });
           }
         }
@@ -905,13 +910,28 @@ export default function Home() {
         </div>
         {/* Integrated Header */}
         <div className="absolute top-0 left-0 w-full px-6 pt-6 z-30">
-          <div className="max-w-7xl mx-auto bg-black/40 backdrop-blur-md border border-white/5 rounded-2xl px-6 py-4 flex flex-col items-center gap-2">
-            <h2 className="text-white text-2xl md:text-3xl font-semibold tracking-tight">
-              {headerData.companyName}
-            </h2>
-            <p className="text-gray-300 text-xs md:text-sm text-center uppercase tracking-[0.2em]">
-              {headerData.tagline}
-            </p>
+          <div className="max-w-7xl mx-auto bg-black/40 backdrop-blur-md border border-white/5 rounded-2xl px-6 py-4 flex flex-col items-center gap-3">
+            {headerData.logo && (headerData.logo.startsWith("data:image") || headerData.logo.startsWith("http") || headerData.logo.startsWith("/")) ? (
+              <div className="flex flex-col items-center gap-2">
+                <img
+                  src={headerData.logo}
+                  alt={headerData.companyName}
+                  className="h-16 md:h-20 w-auto object-contain"
+                />
+                <p className="text-gray-300 text-xs md:text-sm text-center uppercase tracking-[0.2em]">
+                  {headerData.tagline}
+                </p>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-white text-2xl md:text-3xl font-semibold tracking-tight">
+                  {headerData.companyName}
+                </h2>
+                <p className="text-gray-300 text-xs md:text-sm text-center uppercase tracking-[0.2em]">
+                  {headerData.tagline}
+                </p>
+              </>
+            )}
           </div>
         </div>
         <div
@@ -927,24 +947,54 @@ export default function Home() {
           className="max-w-6xl mx-auto text-center relative z-20 pt-24"
           style={{ transform: `translateY(${scrollY * 0.05}px)` }}
         >
-          {/* Connection Network Visual */}
+          {/* Logo Graphic - Replaceable via Dashboard */}
           <div className="flex justify-center mb-8">
-            <div className="relative w-32 h-32">
-              {/* Central hub */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full shadow-lg shadow-purple-500/50 animate-pulse"></div>
-              
-              {/* Connecting nodes */}
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="absolute" style={{
-                  top: '50%',
-                  left: '50%',
-                  transform: `translate(-50%, -50%) rotate(${i * 90}deg) translateY(-40px)`,
-                }}>
-                  <div className="w-4 h-4 bg-cyan-400 rounded-full animate-pulse" style={{ animationDelay: `${i * 0.5}s` }}></div>
-                  <div className="absolute top-1/2 left-1/2 w-10 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500 transform -translate-y-1/2 origin-left rotate-180"></div>
-                </div>
-              ))}
-            </div>
+            {headerData.logo && (headerData.logo.startsWith("data:image") || headerData.logo.startsWith("http") || headerData.logo.startsWith("/")) ? (
+              <div className="relative">
+                <img
+                  src={headerData.logo}
+                  alt={headerData.companyName}
+                  className="h-32 md:h-40 w-auto object-contain mx-auto"
+                />
+              </div>
+            ) : (
+              <div className="relative w-40 h-40 md:w-48 md:h-48">
+                {/* Central orb - purple to blue gradient */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-b from-purple-500 via-purple-400 to-blue-500 shadow-2xl shadow-purple-500/50 animate-pulse" style={{
+                  boxShadow: '0 0 40px rgba(168, 85, 247, 0.6), 0 0 80px rgba(59, 130, 246, 0.4)'
+                }}></div>
+                
+                {/* Four cyan orbs at cardinal positions with lines */}
+                {[
+                  { angle: 0, lineDir: 'up' },    // Top - line up
+                  { angle: 90, lineDir: 'right' }, // Right - line right
+                  { angle: 180, lineDir: 'down' }, // Bottom - line down
+                  { angle: 270, lineDir: 'left' }  // Left - line left
+                ].map((pos, i) => (
+                  <div key={i} className="absolute top-1/2 left-1/2" style={{
+                    transform: `translate(-50%, -50%) rotate(${pos.angle}deg) translateY(-60px)`,
+                  }}>
+                    {/* Cyan orb */}
+                    <div 
+                      className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-cyan-400 shadow-lg shadow-cyan-400/50 animate-pulse" 
+                      style={{ 
+                        animationDelay: `${i * 0.3}s`,
+                        boxShadow: '0 0 20px rgba(34, 211, 238, 0.8), 0 0 40px rgba(34, 211, 238, 0.4)'
+                      }}
+                    ></div>
+                    
+                    {/* Line extending outward */}
+                    <div 
+                      className="absolute top-1/2 left-1/2 w-12 h-0.5 md:w-16 md:h-1 bg-gradient-to-r from-cyan-400 via-purple-400 to-transparent transform -translate-y-1/2 origin-left"
+                      style={{
+                        transform: `translate(-50%, -50%) ${pos.lineDir === 'up' ? 'rotate(180deg)' : pos.lineDir === 'right' ? 'rotate(-90deg)' : pos.lineDir === 'down' ? 'rotate(0deg)' : 'rotate(90deg)'}`,
+                        boxShadow: '0 0 10px rgba(34, 211, 238, 0.6)'
+                      }}
+                    ></div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <h1 className="text-white text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8 tracking-tight">
@@ -978,16 +1028,8 @@ export default function Home() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
-              onClick={() => {
-                const contactSection = document.getElementById("consultation");
-                if (contactSection) {
-                  const offset = 80;
-                  const elementPosition = contactSection.getBoundingClientRect().top;
-                  const offsetPosition = elementPosition + window.pageYOffset - offset;
-                  window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-                }
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl"
+              onClick={() => router.push("/consultation")}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -1029,13 +1071,19 @@ export default function Home() {
                   className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 text-center group hover:bg-gray-800/70 transition-all duration-300"
                 >
                   <div
-                    className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${value.color} flex items-center justify-center text-2xl shadow-lg overflow-hidden`}
+                    className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${value.color} flex items-center justify-center shadow-lg overflow-hidden group-hover:scale-110 transition-transform duration-300 relative`}
                   >
                     {value.icon && value.icon.startsWith("data:image") ? (
                       <img src={value.icon} alt={value.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <span>{value.icon}</span>
-                    )}
+                    ) : (() => {
+                      const IconComponent = coreValueIconMap[value.title] || (() => <span className="text-2xl">{value.icon}</span>);
+                      return (
+                        <div className="text-white/90 group-hover:text-white transition-colors">
+                          <IconComponent className="w-10 h-10" />
+                        </div>
+                      );
+                    })()}
+                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${value.color} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300`}></div>
                   </div>
                   <h3 className="text-white text-xl font-semibold mb-3">{value.title}</h3>
                   <p className="text-gray-300 text-sm leading-relaxed">{value.desc}</p>
@@ -1059,8 +1107,11 @@ export default function Home() {
               <div className="relative p-10">
                 {/* Icon Container */}
                 <div className="mb-6 flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-3xl">🎯</span>
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300 relative">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-400/30 to-purple-600/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
                   <div>
                     <h3 className="text-white text-3xl font-bold mb-1">Our Mission</h3>
@@ -1086,8 +1137,12 @@ export default function Home() {
               <div className="relative p-10">
                 {/* Icon Container */}
                 <div className="mb-6 flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
-                    <span className="text-3xl">👁️</span>
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300 relative">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/30 to-cyan-500/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
                   <div>
                     <h3 className="text-white text-3xl font-bold mb-1">Our Vision</h3>
@@ -1139,12 +1194,18 @@ export default function Home() {
                 onClick={() => handleServiceClick(service)}
                 className="text-left bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all duration-300 hover:scale-105 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:outline-none"
               >
-                <div className="text-5xl mb-4">
+                <div className="mb-4 flex items-center justify-start">
                   {service.icon && service.icon.startsWith("data:image") ? (
                     <img src={service.icon} alt={service.title} className="w-16 h-16 object-cover rounded-lg" />
-                  ) : (
-                    <span>{service.icon}</span>
-                  )}
+                  ) : (() => {
+                    const IconComponent = serviceIconMap[service.title] || (() => <span className="text-5xl">{service.icon}</span>);
+                    return (
+                      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center text-blue-300 group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all duration-300 group-hover:scale-110 relative">
+                        <IconComponent className="w-10 h-10" />
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-300"></div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <h3 className="text-white text-xl font-semibold mb-3">{service.title}</h3>
                 <p className="text-white/70">{service.desc}</p>
@@ -1185,9 +1246,15 @@ export default function Home() {
               <div className="flex items-start gap-4">
                 {selectedService.icon && selectedService.icon.startsWith("data:image") ? (
                   <img src={selectedService.icon} alt={selectedService.title} className="w-16 h-16 object-cover rounded-lg" />
-                ) : (
-                  <div className="text-6xl">{selectedService.icon}</div>
-                )}
+                ) : (() => {
+                  const IconComponent = serviceIconMap[selectedService.title] || (() => <div className="text-6xl">{selectedService.icon}</div>);
+                  return (
+                    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 flex items-center justify-center text-blue-300 flex-shrink-0 relative">
+                      <IconComponent className="w-12 h-12" />
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-lg"></div>
+                    </div>
+                  );
+                })()}
                 <div>
                   <h3 className="text-white text-3xl font-bold mb-2">{selectedService.title}</h3>
                   <p className="text-white/70">{selectedService.desc}</p>
