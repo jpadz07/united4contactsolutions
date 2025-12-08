@@ -1579,7 +1579,9 @@ export default function Home() {
       <section className="relative z-10 py-20 px-6 bg-gray-900/30">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-white text-3xl md:text-4xl font-bold text-center mb-4">Client Success Stories</h2>
-          
+          <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
+            See how we've helped businesses achieve measurable results through our professional virtual assistance services.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               { 
