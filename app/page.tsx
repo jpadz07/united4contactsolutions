@@ -1706,9 +1706,9 @@ export default function Home() {
       {/* Contact Form */}
       <section id="consultation" className={`relative z-10 py-20 px-6 section-fade-up ${visibleSections.has("consultation") ? "visible" : ""}`}>
         <div className="max-w-4xl mx-auto">
-          <form className="section-child"
+          <form 
+            className="section-child bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 md:p-10 space-y-6 shadow-2xl"
             onSubmit={handleContactSubmit}
-            className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 md:p-10 space-y-6 shadow-2xl"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
