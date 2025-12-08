@@ -18,6 +18,7 @@ import {
   SaveIcon,
   MetricsIcon,
 } from "./components/Icons";
+import IconPicker, { iconLibrary } from "./components/IconPicker";
 
 // Default data matching the landing page structure
 const defaultHeader = {
@@ -37,25 +38,25 @@ const defaultHero = {
 
 const defaultCoreValues = [
   {
-    icon: "🤝",
+    icon: "users", // Icon ID from icon library
     title: "Unity",
     desc: "One cohesive team working together with shared goals and clear communication.",
     color: "from-blue-600 to-blue-800",
   },
   {
-    icon: "🎯",
+    icon: "target", // Icon ID from icon library
     title: "Precision",
     desc: "Meticulous attention to detail and accuracy in every task and interaction.",
     color: "from-purple-600 to-purple-800",
   },
   {
-    icon: "💎",
+    icon: "shield-check", // Icon ID from icon library
     title: "Integrity",
     desc: "Honest, ethical practices and transparent communication in all we do.",
     color: "from-blue-600 to-cyan-700",
   },
   {
-    icon: "🚀",
+    icon: "lightning", // Icon ID from icon library
     title: "Impact",
     desc: "Delivering measurable results that drive meaningful business transformation.",
     color: "from-slate-600 to-blue-700",
@@ -75,37 +76,37 @@ const defaultServices = [
   {
     title: "General Virtual Assistance",
     desc: "Comprehensive virtual support services to streamline your daily operations",
-    icon: "🤝",
+    icon: "headset", // Next-gen icon ID
     features: ["Administrative tasks", "Email management", "Calendar scheduling", "Data entry"],
   },
   {
     title: "Marketing and Content",
     desc: "Strategic marketing solutions and engaging content creation services",
-    icon: "📈",
+    icon: "trending-up", // Next-gen icon ID
     features: ["Content creation", "Social media management", "SEO optimization", "Brand strategy"],
   },
   {
     title: "E-Commerce and Retail",
     desc: "End-to-end e-commerce support and retail management solutions",
-    icon: "🛒",
+    icon: "shopping-cart", // Next-gen icon ID
     features: ["Product listings", "Inventory management", "Order processing", "Customer service"],
   },
   {
     title: "Administrative and Support",
     desc: "Professional administrative services to keep your business running smoothly",
-    icon: "📋",
+    icon: "document", // Next-gen icon ID
     features: ["Document management", "Report generation", "Meeting coordination", "Project tracking"],
   },
   {
     title: "Automotive Sales & Aftersales Support",
     desc: "Specialized support for automotive businesses and dealerships",
-    icon: "🚗",
+    icon: "car", // Next-gen icon ID
     features: ["Sales support", "Customer follow-up", "Service scheduling", "Inventory tracking"],
   },
   {
     title: "Web Development",
     desc: "Custom web solutions and digital platform development",
-    icon: "💻",
+    icon: "code", // Next-gen icon ID
     features: ["Website design", "Frontend development", "Backend integration", "Maintenance"],
   },
 ];
@@ -203,6 +204,11 @@ export default function AdminDashboard() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [dbConnectionStatus, setDbConnectionStatus] = useState<{
+    connected: boolean;
+    message: string;
+    loading: boolean;
+  }>({ connected: false, message: "Not checked", loading: false });
 
   // Handle mobile sidebar
   useEffect(() => {
@@ -352,7 +358,8 @@ export default function AdminDashboard() {
           endpoint = "/api/content/core-values";
           body = {
             values: coreValues.map((v) => ({
-              icon: v.icon,
+              // Save icon ID if it's not a data URL (uploaded image), otherwise save the data URL
+              icon: v.icon && v.icon.startsWith("data:image") ? v.icon : (v.icon || null),
               title: v.title,
               desc: v.desc,
               color: v.color,
@@ -374,7 +381,8 @@ export default function AdminDashboard() {
               title: s.title,
               desc: s.desc,
               icon: s.icon,
-              features: s.features,
+              // Filter out empty lines when saving to database
+              features: s.features.filter((f: string) => f.trim() !== ""),
             })),
           };
           break;
@@ -434,14 +442,33 @@ export default function AdminDashboard() {
         body: JSON.stringify(body),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to save");
+        // Check for database connection errors
+        if (response.status === 503) {
+          throw new Error(
+            responseData.error || 
+            "Database not connected. Please check your Supabase configuration."
+          );
+        }
+        throw new Error(
+          responseData.error || 
+          responseData.details || 
+          "Failed to save"
+        );
       }
 
-      setStatus(`${section} saved successfully!`);
-      setTimeout(() => setStatus(""), 3000);
+      // Check if response indicates success
+      if (responseData.success || responseData.data) {
+        setStatus(`${section} saved successfully!`);
+        setTimeout(() => setStatus(""), 3000);
+      } else {
+        setStatus(`${section} saved (check landing page to verify)`);
+        setTimeout(() => setStatus(""), 3000);
+      }
     } catch (error: any) {
+      console.error("Save error:", error);
       setStatus(`Error: ${error.message}`);
       setTimeout(() => setStatus(""), 5000);
     }
@@ -486,7 +513,8 @@ export default function AdminDashboard() {
           if (coreValuesData && coreValuesData.length > 0) {
             setCoreValues(
               coreValuesData.map((v: any) => ({
-                icon: v.icon,
+                // Only keep icon if it's an uploaded image (data URL), otherwise use empty to trigger SVG lookup
+                icon: v.icon && v.icon.startsWith("data:image") ? v.icon : (v.icon || ""),
                 title: v.title,
                 desc: v.description,
                 color: v.color,
@@ -517,7 +545,8 @@ export default function AdminDashboard() {
               servicesData.map((s: any) => ({
                 title: s.title,
                 desc: s.description,
-                icon: s.icon,
+                // Keep icon ID if it's not a data URL (uploaded image), otherwise use empty
+                icon: s.icon && s.icon.startsWith("data:image") ? s.icon : (s.icon || ""),
                 features: s.features || [],
               }))
             );
@@ -586,6 +615,34 @@ export default function AdminDashboard() {
 
   const cancelLogout = () => {
     setShowLogoutConfirm(false);
+  };
+
+  const testDatabaseConnection = async () => {
+    setDbConnectionStatus({ connected: false, message: "Testing...", loading: true });
+    try {
+      const response = await fetch("/api/test-connection");
+      const data = await response.json();
+      
+      if (data.connected) {
+        setDbConnectionStatus({
+          connected: true,
+          message: "Database connected successfully!",
+          loading: false,
+        });
+      } else {
+        setDbConnectionStatus({
+          connected: false,
+          message: data.error || "Connection failed",
+          loading: false,
+        });
+      }
+    } catch (error: any) {
+      setDbConnectionStatus({
+        connected: false,
+        message: `Error: ${error.message}`,
+        loading: false,
+      });
+    }
   };
 
   const handleFileUpload = (file: File, callback: (url: string) => void) => {
@@ -1068,42 +1125,16 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-4">
                         <div className="relative">
                           <label className="block text-xs text-gray-400 mb-2">Icon</label>
-                          <div className="w-20 h-20 bg-gray-800/50 border border-gray-700/50 rounded-xl overflow-hidden flex items-center justify-center">
-                            {value.icon && value.icon.startsWith("data:image") ? (
-                              <img src={value.icon} alt="Icon" className="w-full h-full object-cover" />
-                            ) : value.icon ? (
-                              <span className="text-4xl">{value.icon}</span>
-                            ) : (
-                              <span className="text-gray-500 text-xs">No icon</span>
-                            )}
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="mt-2 w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                handleFileUpload(file, (url) => {
-                                  const updated = [...coreValues];
-                                  updated[idx].icon = url;
-                                  setCoreValues(updated);
-                                });
-                              }
+                          <IconPicker
+                            selectedIconId={value.icon && !value.icon.startsWith("data:image") ? value.icon : null}
+                            onSelect={(iconId) => {
+                              const updated = [...coreValues];
+                              updated[idx].icon = iconId;
+                              setCoreValues(updated);
                             }}
+                            gradientColor={value.color}
                           />
-                          {value.icon && value.icon.startsWith("data:image") && (
-                            <button
-                              onClick={() => {
-                                const updated = [...coreValues];
-                                updated[idx].icon = "";
-                                setCoreValues(updated);
-                              }}
-                              className="mt-1 text-xs text-red-400 hover:text-red-300"
-                            >
-                              Remove
-                            </button>
-                          )}
+                          <p className="mt-2 text-xs text-gray-500">Select a next-generation icon</p>
                         </div>
                         <div className="flex-1">
                           <input
@@ -1221,44 +1252,28 @@ export default function AdminDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <label className="block text-xs text-gray-400 mb-1">Icon</label>
-                            <div className="space-y-2">
-                              <div className="w-16 h-16 bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden flex items-center justify-center">
-                                {service.icon && service.icon.startsWith("data:image") ? (
-                                  <img src={service.icon} alt="Icon" className="w-full h-full object-cover" />
-                                ) : service.icon ? (
-                                  <span className="text-2xl">{service.icon}</span>
-                                ) : (
-                                  <span className="text-gray-500 text-xs">No icon</span>
-                                )}
-                              </div>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="w-full text-xs text-gray-400 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer cursor-pointer"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    handleFileUpload(file, (url) => {
-                                      const updated = [...services];
-                                      updated[idx].icon = url;
-                                      setServices(updated);
-                                    });
-                                  }
+                            <IconPicker
+                              selectedIconId={service.icon && !service.icon.startsWith("data:image") ? service.icon : null}
+                              onSelect={(iconId) => {
+                                const updated = [...services];
+                                updated[idx].icon = iconId;
+                                setServices(updated);
+                              }}
+                              gradientColor="from-blue-600 to-purple-600"
+                            />
+                            <p className="mt-2 text-xs text-gray-500">Select a next-generation icon</p>
+                            {service.icon && service.icon.startsWith("data:image") && (
+                              <button
+                                onClick={() => {
+                                  const updated = [...services];
+                                  updated[idx].icon = "";
+                                  setServices(updated);
                                 }}
-                              />
-                              {service.icon && service.icon.startsWith("data:image") && (
-                                <button
-                                  onClick={() => {
-                                    const updated = [...services];
-                                    updated[idx].icon = "";
-                                    setServices(updated);
-                                  }}
-                                  className="text-xs text-red-400 hover:text-red-300"
-                                >
-                                  Remove
-                                </button>
-                              )}
-                            </div>
+                                className="mt-2 text-xs text-red-400 hover:text-red-300"
+                              >
+                                Remove uploaded image
+                              </button>
+                            )}
                           </div>
                           <div>
                             <label className="block text-xs text-gray-400 mb-1">Title</label>
@@ -1290,16 +1305,25 @@ export default function AdminDashboard() {
                         <div>
                           <label className="block text-xs text-gray-400 mb-2">Features (one per line)</label>
                           <textarea
-                            rows={4}
-                            className="w-full bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-none"
+                            rows={6}
+                            className="w-full bg-gray-800/50 border border-gray-700/50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 resize-y text-white placeholder-gray-500 whitespace-pre-wrap"
                             value={service.features.join("\n")}
                             onChange={(e) => {
                               const updated = [...services];
-                              updated[idx].features = e.target.value.split("\n").filter((f) => f.trim());
+                              // Split by newline and keep all lines (including empty ones for spacing)
+                              updated[idx].features = e.target.value.split("\n");
                               setServices(updated);
                             }}
+                            onKeyDown={(e) => {
+                              // Allow Enter key to create new lines
+                              if (e.key === "Enter") {
+                                e.stopPropagation();
+                              }
+                            }}
                             placeholder="Feature 1&#10;Feature 2&#10;Feature 3"
+                            style={{ whiteSpace: "pre-wrap" }}
                           ></textarea>
+                          <p className="mt-1 text-xs text-gray-500">Press Enter to create a new line</p>
                         </div>
                       </div>
                     ))}
@@ -1723,6 +1747,63 @@ export default function AdminDashboard() {
               <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-2xl p-8">
                 <h3 className="text-2xl font-semibold mb-6">Settings</h3>
                 <div className="space-y-6">
+                  {/* Database Connection Status */}
+                  <div className="p-6 bg-gray-900/50 border border-gray-700/30 rounded-xl">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h4 className="font-semibold mb-2 text-lg">Database Connection</h4>
+                        <p className="text-gray-400 text-sm">
+                          Test your Supabase database connection and verify data flow
+                        </p>
+                      </div>
+                      <button
+                        onClick={testDatabaseConnection}
+                        disabled={dbConnectionStatus.loading}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
+                      >
+                        {dbConnectionStatus.loading ? "Testing..." : "Test Connection"}
+                      </button>
+                    </div>
+                    <div className="mt-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700/30">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-3 h-3 rounded-full ${
+                            dbConnectionStatus.connected
+                              ? "bg-green-500 animate-pulse"
+                              : dbConnectionStatus.loading
+                              ? "bg-yellow-500 animate-pulse"
+                              : "bg-red-500"
+                          }`}
+                        />
+                        <div className="flex-1">
+                          <p
+                            className={`text-sm font-medium ${
+                              dbConnectionStatus.connected
+                                ? "text-green-400"
+                                : dbConnectionStatus.loading
+                                ? "text-yellow-400"
+                                : "text-red-400"
+                            }`}
+                          >
+                            {dbConnectionStatus.message}
+                          </p>
+                          {dbConnectionStatus.connected && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              ✓ Changes made in the dashboard will be saved to the database
+                              <br />
+                              ✓ The landing page will automatically reflect these changes
+                            </p>
+                          )}
+                          {!dbConnectionStatus.connected && !dbConnectionStatus.loading && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Make sure your Supabase environment variables are configured correctly
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="p-4 bg-gray-900/50 border border-gray-700/30 rounded-xl">
                     <h4 className="font-semibold mb-2">Account Settings</h4>
                     <p className="text-gray-400 text-sm">Manage your admin account preferences</p>
@@ -1730,10 +1811,6 @@ export default function AdminDashboard() {
                   <div className="p-4 bg-gray-900/50 border border-gray-700/30 rounded-xl">
                     <h4 className="font-semibold mb-2">Site Configuration</h4>
                     <p className="text-gray-400 text-sm">Configure site-wide settings and preferences</p>
-                  </div>
-                  <div className="p-4 bg-gray-900/50 border border-gray-700/30 rounded-xl">
-                    <h4 className="font-semibold mb-2">API Integration</h4>
-                    <p className="text-gray-400 text-sm">Connect to your CMS or backend API</p>
                   </div>
                 </div>
               </div>

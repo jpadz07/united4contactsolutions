@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { coreValueIconMap, serviceIconMap } from "./components/LandingIcons";
+import { coreValueIconMap, serviceIconMap, iconIdMap } from "./components/LandingIcons";
 
 // Enhanced Particle Component with Click Effect
 const Particle = ({ 
@@ -518,6 +518,47 @@ export default function Home() {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
+  const [heroLoaded, setHeroLoaded] = useState(false);
+  const [heroParticlesBurst, setHeroParticlesBurst] = useState(false);
+
+  // Hero section entrance animation
+  useEffect(() => {
+    // Trigger hero animation on mount
+    const timer = setTimeout(() => {
+      setHeroLoaded(true);
+      // Trigger particle burst after a short delay
+      setTimeout(() => {
+        setHeroParticlesBurst(true);
+      }, 300);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Intersection Observer for section animations
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: "0px 0px -100px 0px",
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setVisibleSections((prev) => new Set(prev).add(entry.target.id));
+        }
+      });
+    }, observerOptions);
+
+    // Observe all sections
+    const sections = document.querySelectorAll("section[id]");
+    sections.forEach((section) => observer.observe(section));
+
+    return () => {
+      sections.forEach((section) => observer.unobserve(section));
+    };
+  }, []);
 
   // Content from Supabase
   const [headerData, setHeaderData] = useState({
@@ -612,32 +653,91 @@ export default function Home() {
   useEffect(() => {
     const loadContent = async () => {
       try {
-        // Load Header
-        const headerRes = await fetch("/api/content/header");
+        // Load Header (with cache busting and timestamp)
+        const headerRes = await fetch(`/api/content/header?t=${Date.now()}`, {
+          cache: 'no-store',
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        });
         if (headerRes.ok) {
           const header = await headerRes.json();
-          if (header) {
-            setHeaderData({
-              companyName: header.company_name || "United4ContactSolutions",
-              tagline: header.tagline || "Unity • Precision • Integrity • Impact",
-              logo: header.logo || "",
-            });
+          console.log("Header API response (raw):", JSON.stringify(header, null, 2));
+          
+          // Handle null response
+          if (header === null) {
+            console.warn("Header data is null - using defaults");
+          } else {
+            // Handle both direct data and wrapped response
+            const headerData = (header && typeof header === 'object' && 'data' in header) ? header.data : header;
+            console.log("Header data (processed):", JSON.stringify(headerData, null, 2));
+            
+            // Check if response has error (database not configured)
+            if (headerData && typeof headerData === 'object' && !headerData.error) {
+              // Always update if we have data (even if some fields are empty)
+              const newHeaderData = {
+                companyName: headerData.company_name || "United4ContactSolutions",
+                tagline: headerData.tagline || "Unity • Precision • Integrity • Impact",
+                logo: headerData.logo || "",
+              };
+              console.log("Setting header data to:", newHeaderData);
+              setHeaderData(newHeaderData);
+              console.log("Header state updated successfully");
+            } else if (headerData && headerData.error) {
+              console.warn("Header data not available:", headerData.error);
+            } else {
+              console.warn("Header data format unexpected:", typeof headerData, headerData);
+            }
           }
+        } else {
+          const errorData = await headerRes.json().catch(() => ({}));
+          console.warn("Failed to load header:", errorData.error || "Unknown error", headerRes.status);
         }
 
-        // Load Hero
-        const heroRes = await fetch("/api/content/hero");
+        // Load Hero (with cache busting and timestamp)
+        const heroRes = await fetch(`/api/content/hero?t=${Date.now()}`, {
+          cache: 'no-store',
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        });
         if (heroRes.ok) {
           const hero = await heroRes.json();
-          if (hero) {
-            setHeroData({
-              headline: hero.headline || "We Build Solutions That Drive Results",
-              subheadline: hero.subheadline || "Connecting Every Step",
-              description: hero.description || "",
-              ctaPrimary: hero.cta_primary || "Schedule Consultation",
-              ctaSecondary: hero.cta_secondary || "View Services",
-            });
+          console.log("Hero API response (raw):", JSON.stringify(hero, null, 2));
+          
+          // Handle null response
+          if (hero === null) {
+            console.warn("Hero data is null - using defaults");
+          } else {
+            // Handle both direct data and wrapped response
+            const heroData = (hero && typeof hero === 'object' && 'data' in hero) ? hero.data : hero;
+            console.log("Hero data (processed):", JSON.stringify(heroData, null, 2));
+            
+            if (heroData && typeof heroData === 'object' && !heroData.error) {
+              // Always update if we have data (even if some fields are empty)
+              const newHeroData = {
+                headline: heroData.headline || "We Build Solutions That Drive Results",
+                subheadline: heroData.subheadline || "Connecting Every Step",
+                description: heroData.description || "",
+                ctaPrimary: heroData.cta_primary || "Schedule Consultation",
+                ctaSecondary: heroData.cta_secondary || "View Services",
+              };
+              console.log("Setting hero data to:", newHeroData);
+              setHeroData(newHeroData);
+              console.log("Hero state updated successfully");
+            } else if (heroData && heroData.error) {
+              console.warn("Hero data not available:", heroData.error);
+            } else {
+              console.warn("Hero data format unexpected:", typeof heroData, heroData);
+            }
           }
+        } else {
+          const errorData = await heroRes.json().catch(() => ({}));
+          console.warn("Failed to load hero:", errorData.error || "Unknown error", heroRes.status);
         }
 
         // Load Core Values
@@ -647,7 +747,8 @@ export default function Home() {
           if (values && values.length > 0) {
             setCoreValues(
               values.map((v: any) => ({
-                icon: v.icon,
+                // Only keep icon if it's an uploaded image (data URL), otherwise use empty to trigger SVG lookup
+                icon: v.icon && v.icon.startsWith("data:image") ? v.icon : "",
                 title: v.title,
                 desc: v.description,
                 color: v.color,
@@ -678,7 +779,8 @@ export default function Home() {
               servicesData.map((s: any) => ({
                 title: s.title,
                 desc: s.description,
-                icon: s.icon,
+                // Keep icon ID if it's not a data URL (uploaded image), otherwise use empty
+                icon: s.icon && s.icon.startsWith("data:image") ? s.icon : (s.icon || ""),
                 features: s.features || [],
               }))
             );
@@ -714,6 +816,15 @@ export default function Home() {
 
     loadContent();
   }, []);
+
+  // Debug: Log state changes
+  useEffect(() => {
+    console.log("Header state changed:", headerData);
+  }, [headerData]);
+
+  useEffect(() => {
+    console.log("Hero state changed:", heroData);
+  }, [heroData]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -905,11 +1016,35 @@ export default function Home() {
         </video>
 
         {/* Hero Particle Field */}
-        <div style={{ transform: `translateY(${scrollY * 0.08}px)` }}>
+        <div className={`hero-particle-field ${heroParticlesBurst ? "particles-burst" : ""}`} style={{ transform: `translateY(${scrollY * 0.08}px)` }}>
           <HeroParticleField />
         </div>
+        
+        {/* Burst Particles Effect */}
+        {heroParticlesBurst && (
+          <div className="absolute inset-0 z-10 pointer-events-none">
+            {Array.from({ length: 30 }).map((_, i) => {
+              const angle = (360 / 30) * i;
+              const distance = 200 + Math.random() * 100;
+              const radians = (angle * Math.PI) / 180;
+              return (
+                <div
+                  key={i}
+                  className="absolute hero-burst-particle"
+                  style={{
+                    left: '50%',
+                    top: '50%',
+                    animationDelay: `${i * 0.05}s`,
+                    '--x': `${Math.cos(radians) * distance}px`,
+                    '--y': `${Math.sin(radians) * distance}px`,
+                  } as React.CSSProperties}
+                />
+              );
+            })}
+          </div>
+        )}
         {/* Integrated Header */}
-        <div className="absolute top-0 left-0 w-full px-6 pt-6 z-30">
+        <div className={`absolute top-0 left-0 w-full px-6 pt-6 z-30 hero-header ${heroLoaded ? "hero-header-visible" : ""}`}>
           <div className="max-w-7xl mx-auto bg-black/40 backdrop-blur-md border border-white/5 rounded-2xl px-6 py-4 flex flex-col items-center gap-3">
             {headerData.logo && (headerData.logo.startsWith("data:image") || headerData.logo.startsWith("http") || headerData.logo.startsWith("/")) ? (
               <div className="flex flex-col items-center gap-2">
@@ -948,7 +1083,7 @@ export default function Home() {
           style={{ transform: `translateY(${scrollY * 0.05}px)` }}
         >
           {/* Logo Graphic - Replaceable via Dashboard */}
-          <div className="flex justify-center mb-8">
+          <div className={`flex justify-center mb-8 hero-logo ${heroLoaded ? "hero-logo-visible" : ""}`}>
             {headerData.logo && (headerData.logo.startsWith("data:image") || headerData.logo.startsWith("http") || headerData.logo.startsWith("/")) ? (
               <div className="relative">
                 <img
@@ -997,68 +1132,39 @@ export default function Home() {
             )}
           </div>
 
-          <h1 className="text-white text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8 tracking-tight">
+          <h1 className={`text-white text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8 tracking-tight hero-headline ${heroLoaded ? "hero-headline-visible" : ""}`}>
             {heroData.headline.split(" ").map((word, i, arr) =>
               i === arr.length - 1 ? (
-                <span key={i}>
+                <span key={i} className="hero-word" style={{ animationDelay: `${0.8 + i * 0.1}s` }}>
                   {" "}
                   <span className="text-blue-400 italic">{word}</span>
                 </span>
               ) : (
-                <span key={i}>{word} </span>
+                <span key={i} className="hero-word" style={{ animationDelay: `${0.8 + i * 0.1}s` }}>{word} </span>
               )
             )}
           </h1>
           
-          <div className="flex flex-col items-center mb-12">
+          <div className={`flex flex-col items-center mb-12 hero-subheadline ${heroLoaded ? "hero-subheadline-visible" : ""}`}>
             <div className="hero-walk-track">
               {[0, 1, 2, 3, 4, 5, 6].map((step) => (
                 <span
                   key={step}
                   className="hero-walk-dot"
-                  style={{ animationDelay: `${step * 0.15}s` }}
+                  style={{ animationDelay: `${1.5 + step * 0.15}s` }}
                 ></span>
               ))}
             </div>
-            <p className="text-gray-400 text-xs md:text-sm mt-4 tracking-[0.4em] uppercase">
+            <p className="text-gray-400 text-xs md:text-sm mt-4 tracking-[0.4em] uppercase hero-tagline">
               {heroData.subheadline}
             </p>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              onClick={() => router.push("/consultation")}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              {heroData.ctaPrimary}
-            </button>
-            <button 
-              onClick={() => {
-                const servicesSection = document.getElementById("services");
-                if (servicesSection) {
-                  const offset = 80;
-                  const elementPosition = servicesSection.getBoundingClientRect().top;
-                  const offsetPosition = elementPosition + window.pageYOffset - offset;
-                  window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-                }
-              }}
-              className="border border-gray-600 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-all duration-300 hover:bg-gray-800 hover:border-gray-500 flex items-center justify-center gap-3"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-              {heroData.ctaSecondary}
-            </button>
-          </div>
         </div>
       </main>
 
       {/* About Us Section */}
-      <section id="about" className="relative z-10 py-20 px-6">
+      <section id="about" className={`relative z-10 py-20 px-6 section-fade-up ${visibleSections.has("about") ? "visible" : ""}`}>
         <div className="max-w-7xl mx-auto">
           <div className="mb-16">
             <p className="text-sm text-blue-400 uppercase tracking-[0.4em] text-center mb-6">
@@ -1076,7 +1182,8 @@ export default function Home() {
                     {value.icon && value.icon.startsWith("data:image") ? (
                       <img src={value.icon} alt={value.title} className="w-full h-full object-cover" />
                     ) : (() => {
-                      const IconComponent = coreValueIconMap[value.title] || (() => <span className="text-2xl">{value.icon}</span>);
+                      // First try to get icon by ID (from dashboard selection), then by title (default)
+                      const IconComponent = (value.icon && iconIdMap[value.icon]) || coreValueIconMap[value.title] || (() => <span className="text-2xl">{value.icon}</span>);
                       return (
                         <div className="text-white/90 group-hover:text-white transition-colors">
                           <IconComponent className="w-10 h-10" />
@@ -1164,7 +1271,7 @@ export default function Home() {
       </section>
 
       {/* Services Section */}
-      <section id="services" className="relative z-10 py-20 px-6">
+      <section id="services" className={`relative z-10 py-20 px-6 section-fade-up ${visibleSections.has("services") ? "visible" : ""}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-white text-4xl md:text-5xl font-bold mb-4">Our Contact Solutions</h2>
@@ -1198,7 +1305,8 @@ export default function Home() {
                   {service.icon && service.icon.startsWith("data:image") ? (
                     <img src={service.icon} alt={service.title} className="w-16 h-16 object-cover rounded-lg" />
                   ) : (() => {
-                    const IconComponent = serviceIconMap[service.title] || (() => <span className="text-5xl">{service.icon}</span>);
+                    // First try icon ID, then service name, then fallback to emoji
+                    const IconComponent = (service.icon && iconIdMap[service.icon]) || serviceIconMap[service.title] || (() => <span className="text-5xl">{service.icon}</span>);
                     return (
                       <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center text-blue-300 group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all duration-300 group-hover:scale-110 relative">
                         <IconComponent className="w-10 h-10" />
@@ -1247,7 +1355,7 @@ export default function Home() {
                 {selectedService.icon && selectedService.icon.startsWith("data:image") ? (
                   <img src={selectedService.icon} alt={selectedService.title} className="w-16 h-16 object-cover rounded-lg" />
                 ) : (() => {
-                  const IconComponent = serviceIconMap[selectedService.title] || (() => <div className="text-6xl">{selectedService.icon}</div>);
+                  const IconComponent = (selectedService.icon && iconIdMap[selectedService.icon]) || serviceIconMap[selectedService.title] || (() => <div className="text-6xl">{selectedService.icon}</div>);
                   return (
                     <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 flex items-center justify-center text-blue-300 flex-shrink-0 relative">
                       <IconComponent className="w-12 h-12" />
@@ -1308,7 +1416,7 @@ export default function Home() {
       )}
 
       {/* Meet our Team Section */}
-      <section id="team" className="relative z-10 py-20 px-6 bg-black/40">
+      <section id="team" className={`relative z-10 py-20 px-6 bg-black/40 section-fade-up ${visibleSections.has("team") ? "visible" : ""}`}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <p className="text-sm text-blue-400 uppercase tracking-[0.4em] mb-3">Our Team</p>
@@ -1433,7 +1541,7 @@ export default function Home() {
       )}
 
       {/* Projects Section */}
-      <section id="projects" className="relative z-10 py-20 px-6 bg-black/50">
+      <section id="projects" className={`relative z-10 py-20 px-6 bg-black/50 section-fade-up ${visibleSections.has("projects") ? "visible" : ""}`}>
         <div className="max-w-7xl mx-auto">
           <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">Featured Projects</h2>
           <p className="text-white/70 text-center mb-16 max-w-2xl mx-auto">
@@ -1596,9 +1704,9 @@ export default function Home() {
       </section>
 
       {/* Contact Form */}
-      <section id="consultation" className="relative z-10 py-20 px-6">
+      <section id="consultation" className={`relative z-10 py-20 px-6 section-fade-up ${visibleSections.has("consultation") ? "visible" : ""}`}>
         <div className="max-w-4xl mx-auto">
-          <form
+          <form className="section-child"
             onSubmit={handleContactSubmit}
             className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 md:p-10 space-y-6 shadow-2xl"
           >
@@ -1745,7 +1853,7 @@ export default function Home() {
       </section>
 
       {/* Contacts Section */}
-      <section id="contacts" className="relative z-10 py-20 px-6 bg-black/50 pb-32">
+      <section id="contacts" className={`relative z-10 py-20 px-6 bg-black/50 pb-32 section-fade-up ${visibleSections.has("contacts") ? "visible" : ""}`}>
         <div className="max-w-7xl mx-auto">
           <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">Get in Touch</h2>
           <p className="text-white/70 text-center mb-16 max-w-2xl mx-auto">

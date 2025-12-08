@@ -376,11 +376,55 @@ html {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -390,6 +434,239 @@ html {
 
 .fade-in {
   animation: fadeInUp 0.3s ease-out;
+}
+
+.section-fade-in {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-fade-up {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: opacity 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.section-fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-scale-in {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-scale-in.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Staggered animations for child elements */
+.section-child {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-fade-up.visible .section-child {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-fade-up.visible .section-child:nth-child(1) {
+  transition-delay: 0.1s;
+}
+
+.section-fade-up.visible .section-child:nth-child(2) {
+  transition-delay: 0.2s;
+}
+
+.section-fade-up.visible .section-child:nth-child(3) {
+  transition-delay: 0.3s;
+}
+
+.section-fade-up.visible .section-child:nth-child(4) {
+  transition-delay: 0.4s;
+}
+
+.section-fade-up.visible .section-child:nth-child(5) {
+  transition-delay: 0.5s;
+}
+
+.section-fade-up.visible .section-child:nth-child(6) {
+  transition-delay: 0.6s;
+}
+
+/* Hero Section Amazing Transitions */
+.hero-content-wrapper {
+  opacity: 0;
+  transform: translateY(60px) scale(0.95);
+  transition: opacity 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.hero-content-wrapper.hero-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.hero-header {
+  opacity: 0;
+  transform: translateY(-30px);
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-header.hero-header-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-logo {
+  opacity: 0;
+  transform: scale(0.3) rotate(-180deg);
+  filter: blur(20px);
+  transition: opacity 1s cubic-bezier(0.34, 1.56, 0.64, 1), transform 1s cubic-bezier(0.34, 1.56, 0.64, 1), filter 1s ease-out;
+}
+
+.hero-logo.hero-logo-visible {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  filter: blur(0px);
+}
+
+.hero-headline {
+  opacity: 0;
+}
+
+.hero-headline.hero-headline-visible {
+  opacity: 1;
+}
+
+.hero-word {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(50px) rotateX(90deg);
+  transform-origin: center;
+  animation: heroWordReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes heroWordReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) rotateX(90deg) scale(0.8);
+  }
+  60% {
+    transform: translateY(-10px) rotateX(-10deg) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg) scale(1);
+  }
+}
+
+.hero-subheadline {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1) 1.5s, transform 1s cubic-bezier(0.4, 0, 0.2, 1) 1.5s;
+}
+
+.hero-subheadline.hero-subheadline-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-tagline {
+  opacity: 0;
+  letter-spacing: 0.8em;
+  transition: opacity 1.2s ease-out 2s, letter-spacing 1.2s ease-out 2s;
+}
+
+.hero-subheadline-visible .hero-tagline {
+  opacity: 1;
+  letter-spacing: 0.4em;
+}
+
+.hero-particle-field {
+  opacity: 0;
+  transition: opacity 1.5s ease-out 0.5s;
+}
+
+.hero-particle-field.particles-burst {
+  opacity: 1;
+}
+
+.hero-burst-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 0 20px rgba(139, 92, 246, 0.6);
+  animation: heroBurstParticle 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+@keyframes heroBurstParticle {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(0, 0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(var(--x, 0), var(--y, 0)) scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(calc(var(--x, 0) * 1.2), calc(var(--y, 0) * 1.2)) scale(0);
+  }
+}
+
+/* Enhanced hero walk dots animation */
+.hero-walk-track {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 1s ease-out 1.8s, transform 1s cubic-bezier(0.34, 1.56, 0.64, 1) 1.8s;
+}
+
+.hero-subheadline-visible .hero-walk-track {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Glow effect on hero elements */
+.hero-logo-visible::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  animation: heroGlowPulse 2s ease-in-out infinite 1s;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes heroGlowPulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* Smooth parallax for hero background */
+.hero-background-video {
+  transition: transform 0.1s ease-out;
 }
 
 /* Custom Scrollbar */

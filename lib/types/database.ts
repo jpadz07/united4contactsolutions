@@ -16,7 +16,7 @@ export interface HeroData {
   updated_at?: string;
 }
 
-export interface CoreValue {
+export interface CoreValue {  
   id?: number;
   icon: string; // base64 or URL
   title: string;

@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS hero (
 -- Core Values table
 CREATE TABLE IF NOT EXISTS core_values (
   id SERIAL PRIMARY KEY,
-  icon TEXT NOT NULL, -- base64 or URL
+  icon TEXT, -- base64, URL, or icon ID (can be NULL or empty for default SVG icons)
   title TEXT NOT NULL,
   description TEXT NOT NULL,
   color TEXT NOT NULL, -- Tailwind gradient classes

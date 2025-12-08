@@ -33,7 +33,11 @@ export async function POST(request: NextRequest) {
 
     // Insert new values
     const valuesToInsert = values.map((value: any, index: number) => ({
-      icon: value.icon,
+      // Save icon ID if it's not a data URL (uploaded image), otherwise save the data URL
+      // If empty string, save empty string (not null) to avoid constraint violation
+      icon: value.icon && value.icon.startsWith("data:image") 
+        ? value.icon 
+        : (value.icon || ""), // Use empty string instead of null
       title: value.title,
       description: value.desc,
       color: value.color,
