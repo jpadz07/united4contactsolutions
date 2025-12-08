@@ -55,6 +55,9 @@ export default function ConsultationPage() {
         phone: "",
         company: "",
         service: "",
+        teamSize: "",
+        timeline: "",
+        contactPreference: "",
         message: "",
       });
     } catch (error) {
