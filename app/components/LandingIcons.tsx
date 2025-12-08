@@ -92,6 +92,10 @@ export const coreValueIconMap: Record<string, React.ComponentType<{ className?: 
   "Precision": PrecisionIcon,
   "Integrity": IntegrityIcon,
   "Impact": ImpactIcon,
+  // Additional aliases used in dashboard/core values
+  "Focus": PrecisionIcon,
+  "Commitment": IntegrityIcon,
+  "Stewardship": ImpactIcon,
 };
 
 // Icon library mapping by ID (for dashboard-selected icons)

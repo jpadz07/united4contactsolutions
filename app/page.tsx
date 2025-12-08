@@ -761,8 +761,8 @@ export default function Home() {
           if (values && values.length > 0) {
             setCoreValues(
               values.map((v: any) => ({
-                // Only keep icon if it's an uploaded image (data URL), otherwise use empty to trigger SVG lookup
-                icon: v.icon && v.icon.startsWith("data:image") ? v.icon : "",
+                // Preserve icon ids or data URLs; fall back to empty string when null/undefined
+                icon: typeof v.icon === "string" ? v.icon : "",
                 title: v.title,
                 desc: v.description,
                 color: v.color,
@@ -1683,15 +1683,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
-              onClick={() => {
-                const contactSection = document.getElementById("consultation");
-                if (contactSection) {
-                  const offset = 80;
-                  const elementPosition = contactSection.getBoundingClientRect().top;
-                  const offsetPosition = elementPosition + window.pageYOffset - offset;
-                  window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-                }
-              }}
+              onClick={() => router.push("/consultation")}
               className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold px-8 py-4 rounded-full text-lg transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 hover:scale-105 flex items-center justify-center gap-3"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

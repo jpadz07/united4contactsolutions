@@ -17,13 +17,14 @@ import {
   ServicesIcon,
   SaveIcon,
   MetricsIcon,
+  
 } from "./components/Icons";
 import IconPicker, { iconLibrary } from "./components/IconPicker";
 
 // Default data matching the landing page structure
 const defaultHeader = {
   companyName: "United4ContactSolutions",
-  tagline: "Unity • Precision • Integrity • Impact",
+  tagline: "Unity • Focus • Commitment • Stewardship",
   logo: "",
 };
 
