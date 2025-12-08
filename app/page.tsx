@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { coreValueIconMap, serviceIconMap, iconIdMap } from "./components/LandingIcons";
 
@@ -493,6 +493,16 @@ const INITIAL_FORM_STATE: ContactFormData = {
   consent: false,
 };
 
+const normalizeHeadline = (headline: string) => {
+  if (!headline) return "";
+  if (headline.includes(" ")) return headline;
+  // Insert spaces before capital letters/numbers to split camel/pascal case strings
+  return headline
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
+    .trim();
+};
+
 export default function Home() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("home");
@@ -574,6 +584,10 @@ export default function Home() {
     ctaPrimary: "Schedule Consultation",
     ctaSecondary: "View Services",
   });
+  const formattedHeadline = useMemo(
+    () => normalizeHeadline(heroData.headline || ""),
+    [heroData.headline]
+  );
   const [coreValues, setCoreValues] = useState([
     {
       icon: "🤝",
@@ -1133,7 +1147,7 @@ export default function Home() {
           </div>
 
           <h1 className={`text-white text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8 tracking-tight hero-headline ${heroLoaded ? "hero-headline-visible" : ""}`}>
-            {heroData.headline.split(" ").map((word, i, arr) =>
+            {formattedHeadline.split(" ").map((word, i, arr) =>
               i === arr.length - 1 ? (
                 <span key={i} className="hero-word" style={{ animationDelay: `${0.8 + i * 0.1}s` }}>
                   {" "}
