@@ -1430,11 +1430,11 @@ export default function Home() {
                 </div>
 
                 {teamMembers.length > 1 && (
-                  <>
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-3 md:px-5 lg:px-7">
                     <button
                       type="button"
                       onClick={() => handleTeamCarousel("prev")}
-                      className="arrow-cta group flex absolute left-[-18px] sm:left-[-12px] md:left-[-6px] lg:left-[6px] top-1/2 -translate-y-1/2 w-12 h-12 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_26px_rgba(34,211,238,0.35)] active:scale-90 active:shadow-[0_0_22px_rgba(139,92,246,0.35)] z-30 backdrop-blur-sm"
+                      className="arrow-cta group flex pointer-events-auto w-12 h-12 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_26px_rgba(34,211,238,0.35)] active:scale-90 active:shadow-[0_0_22px_rgba(139,92,246,0.35)] backdrop-blur-sm"
                       aria-label="Previous team member"
                     >
                       <svg className="w-6 h-6 transition-transform duration-500 ease-out group-hover:-translate-x-0.5 group-active:-translate-x-1" viewBox="0 0 24 24" aria-hidden="true">
@@ -1464,7 +1464,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => handleTeamCarousel("next")}
-                      className="arrow-cta group flex absolute right-[-18px] sm:right-[-12px] md:right-[-6px] lg:right-[6px] top-1/2 -translate-y-1/2 w-12 h-12 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_26px_rgba(34,211,238,0.35)] active:scale-90 active:shadow-[0_0_22px_rgba(139,92,246,0.35)] z-30 backdrop-blur-sm"
+                      className="arrow-cta group flex pointer-events-auto w-12 h-12 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_26px_rgba(34,211,238,0.35)] active:scale-90 active:shadow-[0_0_22px_rgba(139,92,246,0.35)] backdrop-blur-sm"
                       aria-label="Next team member"
                     >
                       <svg className="w-6 h-6 transition-transform duration-500 ease-out group-hover:translate-x-0.5 group-active:translate-x-1" viewBox="0 0 24 24" aria-hidden="true">
@@ -1491,7 +1491,7 @@ export default function Home() {
                         />
                       </svg>
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
 
@@ -1625,70 +1625,6 @@ export default function Home() {
                   <button className="text-white px-6 py-3 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 hover:bg-white/20 transition-colors">
                     View Project
                   </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Client Success Stories */}
-      <section className="relative z-10 py-20 px-6 bg-gray-900/30">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-white text-3xl md:text-4xl font-bold text-center mb-4">Client Success Stories</h2>
-          <p className="text-gray-400 text-center mb-16 max-w-2xl mx-auto">
-            See how we've helped businesses achieve measurable results through our professional virtual assistance services.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { 
-                name: "Sarah Mitchell", 
-                role: "Operations Director", 
-                company: "TechFlow Solutions",
-                quote: "United4ContactSolutions reduced our administrative overhead by 40% while improving customer response times. Their team seamlessly integrated with our operations.",
-                rating: 5,
-                result: "40% cost reduction",
-                avatar: "👩‍💼"
-              },
-              { 
-                name: "David Chen", 
-                role: "CEO", 
-                company: "Global Automotive Parts",
-                quote: "Their automotive sales support helped us increase lead conversion by 65%. The team's industry knowledge and professionalism exceeded our expectations.",
-                rating: 5,
-                result: "65% lead increase",
-                avatar: "👨‍💼"
-              },
-              { 
-                name: "Maria Rodriguez", 
-                role: "Founder", 
-                company: "E-Commerce Plus",
-                quote: "From order processing to customer service, they handle everything flawlessly. Our customer satisfaction scores improved by 35% in just 3 months.",
-                rating: 5,
-                result: "35% satisfaction boost",
-                avatar: "👩‍💻"
-              },
-            ].map((testimonial, i) => (
-              <div key={i} className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-6 hover:bg-gray-800/70 transition-all duration-300">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full flex items-center justify-center text-xl">
-                    {testimonial.avatar}
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold">{testimonial.name}</p>
-                    <p className="text-gray-400 text-sm">{testimonial.role}</p>
-                    <p className="text-blue-400 text-xs font-medium">{testimonial.company}</p>
-                  </div>
-                </div>
-                <div className="flex gap-1 mb-3">
-                  {[...Array(testimonial.rating)].map((_, j) => (
-                    <span key={j} className="text-yellow-400 text-sm">★</span>
-                  ))}
-                </div>
-                <p className="text-gray-300 mb-4 text-sm leading-relaxed italic">"{testimonial.quote}"</p>
-                <div className="bg-blue-900/30 border border-blue-700/30 rounded-lg p-3">
-                  <p className="text-blue-300 text-xs font-semibold uppercase tracking-wide mb-1">Result</p>
-                  <p className="text-white text-sm font-medium">{testimonial.result}</p>
                 </div>
               </div>
             ))}
