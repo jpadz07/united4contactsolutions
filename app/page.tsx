@@ -473,26 +473,6 @@ interface TeamMember {
   photo: string;
 }
 
-interface ContactFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  message: string;
-  hearAbout: string;
-  consent: boolean;
-}
-
-const INITIAL_FORM_STATE: ContactFormData = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  message: "",
-  hearAbout: "",
-  consent: false,
-};
-
 const normalizeHeadline = (headline: string) => {
   if (!headline) return "";
   if (headline.includes(" ")) return headline;
@@ -522,12 +502,8 @@ export default function Home() {
     features: string[];
   } | null>(null);
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
-  const [contactForm, setContactForm] = useState<ContactFormData>(INITIAL_FORM_STATE);
-  const [formStatus, setFormStatus] = useState<{ type: "success" | "error" | null; message: string }>({
-    type: null,
-    message: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [teamCarouselIndex, setTeamCarouselIndex] = useState(0);
+  const [teamCarouselPulse, setTeamCarouselPulse] = useState(0);
   const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
   const [heroLoaded, setHeroLoaded] = useState(false);
   const [heroParticlesBurst, setHeroParticlesBurst] = useState(false);
@@ -661,6 +637,11 @@ export default function Home() {
     },
   ]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const visibleTeamMembers = useMemo(() => {
+    if (!teamMembers.length) return [];
+    const visibleCount = Math.min(5, teamMembers.length);
+    return Array.from({ length: visibleCount }, (_, i) => teamMembers[(teamCarouselIndex + i) % teamMembers.length]);
+  }, [teamMembers, teamCarouselIndex]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load data from Supabase
@@ -936,61 +917,21 @@ export default function Home() {
     setIsServiceModalOpen(true);
   };
 
+  const handleTeamCarousel = (direction: "next" | "prev") => {
+    setTeamCarouselIndex((prev) =>
+      direction === "next"
+        ? (prev + 1) % (teamMembers.length || 1)
+        : (prev - 1 + (teamMembers.length || 1)) % (teamMembers.length || 1)
+    );
+    setTeamCarouselPulse((p) => p + 1);
+  };
+
   const closeServiceModal = () => {
     setIsServiceModalOpen(false);
     setTimeout(() => {
       setSelectedService(null);
     }, 300);
   };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setContactForm((prev) => ({ ...prev, [name]: value }));
-    if (formStatus.type) {
-      setFormStatus({ type: null, message: "" });
-    }
-  };
-
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setContactForm((prev) => ({ ...prev, [name]: checked }));
-    if (formStatus.type) {
-      setFormStatus({ type: null, message: "" });
-    }
-  };
-
-  const handleContactSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const requiredFields: Array<keyof ContactFormData> = ["firstName", "lastName", "email", "message"];
-    const missingFields = requiredFields.filter((field) => {
-      if (field === "consent") return false;
-      return !contactForm[field] || (typeof contactForm[field] === "string" && !contactForm[field].trim());
-    });
-
-    if (missingFields.length > 0) {
-      setFormStatus({ type: "error", message: "Please fill out all required fields before submitting." });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setFormStatus({
-        type: "success",
-        message: "Thank you for your message! We'll get back to you soon.",
-      });
-      setContactForm(INITIAL_FORM_STATE);
-    } catch (error) {
-      setFormStatus({
-        type: "error",
-        message: "Something went wrong. Please try again or email us directly.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
 
   return (
     <div className="relative min-h-screen bg-black">
@@ -1430,36 +1371,138 @@ export default function Home() {
       )}
 
       {/* Meet our Team Section */}
-      <section id="team" className={`relative z-10 py-20 px-6 bg-black/40 section-fade-up ${visibleSections.has("team") ? "visible" : ""}`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-sm text-blue-400 uppercase tracking-[0.4em] mb-3">Our Team</p>
-            <h2 className="text-white text-4xl md:text-5xl font-bold mb-3">Our Experts Are Like No Other</h2>
-            <p className="text-white/70 max-w-4xl mx-auto">
-              Partner with our experts to elevate your operations. We work closely with every client to deliver practical
-              improvements that make daily workflows smarter and more efficient.
-          </p>
-        </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-items-center">
-            {teamMembers.map((member) => (
-              <div
-                key={member.email}
-                onClick={() => handleMemberClick(member)}
-                className="group cursor-pointer rounded-[32px] overflow-hidden bg-white shadow-2xl flex flex-col w-full max-w-xs"
-              >
-                <div className="relative h-64 w-full bg-gradient-to-br from-gray-200 via-gray-100 to-white flex items-center justify-center">
-                  {member.icon && member.icon.startsWith("data:image") ? (
-                    <img src={member.icon} alt={member.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-6xl">{member.icon}</div>
-                  )}
+      <section id="team" className={`relative z-10 py-24 px-6 md:px-10 bg-black/40 overflow-hidden section-fade-up ${visibleSections.has("team") ? "visible" : ""}`}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(88,102,255,0.35),_rgba(12,15,35,0.1)_45%,_transparent_65%)] pointer-events-none" />
+        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.08)_0,_rgba(255,255,255,0)_55%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative pt-6 md:pt-10">
+          <div className="text-center mb-14 md:mb-16 px-4">
+            <h2 className="text-white text-4xl md:text-5xl font-bold mb-4">Meet Our Team</h2>
+            <p className="text-white/80 max-w-3xl mx-auto">
+              Behind every great innovation is a team of visionary leaders, creative minds, and strategic thinkers.
+              Get to know the brilliant minds shaping our future.
+            </p>
+            <div className="mt-8 flex justify-center">
+
+            </div>
+          </div>
+
+          <div className="relative rounded-[32px] border border-white/10 bg-gradient-to-br from-[#0d1024] via-[#0f1230] to-[#070910] p-8 md:p-12 lg:p-16 shadow-[0_32px_110px_-34px_rgba(0,0,0,0.88)] overflow-hidden min-h-[540px] md:min-h-[640px]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(88,102,255,0.15),_rgba(12,15,35,0.4)_60%,_rgba(5,7,15,0.9))] pointer-events-none" />
+            <div className="relative flex flex-col gap-10">
+              <div className="relative px-2 md:px-6 lg:px-10 pt-2 pb-6">
+                <div
+                  key={teamCarouselPulse}
+                  className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 lg:gap-16 carousel-click-anim"
+                >
+                  {visibleTeamMembers.map((member, idx, arr) => {
+                    const centerIndex = Math.floor(arr.length / 2);
+                    const isCenter = idx === centerIndex;
+                    const isSide = Math.abs(idx - centerIndex) === 1;
+                    return (
+                    <div
+                      key={(member.email || member.name) + idx}
+                      onClick={() => handleMemberClick(member)}
+                        className={`relative cursor-pointer rounded-[30px] overflow-hidden bg-white/5 border border-white/10 transition-all duration-500 ease-out
+                        ${isCenter ? "w-[300px] md:w-[360px] lg:w-[420px] scale-110 md:scale-120 shadow-2xl shadow-purple-900/40 z-20" : ""}
+                        ${isSide ? "w-[260px] md:w-[300px] lg:w-[340px] opacity-100 scale-[1.02] z-10" : ""}
+                        ${!isCenter && !isSide ? "w-[230px] md:w-[260px] lg:w-[300px] opacity-80 scale-95 z-0" : ""}
+                      `}
+                    >
+                        <div className="relative aspect-[3/4] w-full">
+                          <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-black/70 z-10" />
+                          {member.icon && member.icon.startsWith("data:image") ? (
+                            <img src={member.icon} alt={member.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-900 to-black flex items-center justify-center text-7xl text-white/80">
+                              {member.icon || "👤"}
+                            </div>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+                            <div className="bg-black/70 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-3 shadow-lg shadow-black/50">
+                              <h3 className="text-white font-semibold text-base leading-tight">{member.name}</h3>
+                              <p className="text-white/70 text-xs mt-1">{member.role}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="p-6 text-center">
-                  <h3 className="text-black text-lg font-semibold">{member.name}</h3>
-                  <p className="text-gray-600 text-sm">{member.role}</p>
-                </div>
+
+                {teamMembers.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleTeamCarousel("prev")}
+                      className="arrow-cta group flex absolute left-[-18px] sm:left-[-12px] md:left-[-6px] lg:left-[6px] top-1/2 -translate-y-1/2 w-12 h-12 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_26px_rgba(34,211,238,0.35)] active:scale-90 active:shadow-[0_0_22px_rgba(139,92,246,0.35)] z-30 backdrop-blur-sm"
+                      aria-label="Previous team member"
+                    >
+                      <svg className="w-6 h-6 transition-transform duration-500 ease-out group-hover:-translate-x-0.5 group-active:-translate-x-1" viewBox="0 0 24 24" aria-hidden="true">
+                        <defs>
+                          <linearGradient id="arrow-prev" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#8b5cf6" />
+                            <stop offset="100%" stopColor="#22d3ee" />
+                          </linearGradient>
+                        </defs>
+                        <path
+                          d="M14.5 5.5 8 12l6.5 6.5"
+                          fill="none"
+                          stroke="url(#arrow-prev)"
+                          strokeWidth="2.25"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M11 12h7"
+                          fill="none"
+                          stroke="url(#arrow-prev)"
+                          strokeWidth="2.25"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTeamCarousel("next")}
+                      className="arrow-cta group flex absolute right-[-18px] sm:right-[-12px] md:right-[-6px] lg:right-[6px] top-1/2 -translate-y-1/2 w-12 h-12 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_26px_rgba(34,211,238,0.35)] active:scale-90 active:shadow-[0_0_22px_rgba(139,92,246,0.35)] z-30 backdrop-blur-sm"
+                      aria-label="Next team member"
+                    >
+                      <svg className="w-6 h-6 transition-transform duration-500 ease-out group-hover:translate-x-0.5 group-active:translate-x-1" viewBox="0 0 24 24" aria-hidden="true">
+                        <defs>
+                          <linearGradient id="arrow-next" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#22d3ee" />
+                            <stop offset="100%" stopColor="#8b5cf6" />
+                          </linearGradient>
+                        </defs>
+                        <path
+                          d="M9.5 5.5 16 12l-6.5 6.5"
+                          fill="none"
+                          stroke="url(#arrow-next)"
+                          strokeWidth="2.25"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M13 12H6"
+                          fill="none"
+                          stroke="url(#arrow-next)"
+                          strokeWidth="2.25"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
+                  </>
+                )}
               </div>
-            ))}
+
+              <div className="relative text-center max-w-4xl mx-auto">
+                <p className="text-white/80 italic leading-relaxed">
+                  “Innovation isn’t just about technology; it’s about the people behind it. Our team pushes boundaries,
+                  redefines possibilities, and shapes the future—one bold idea at a time.”
+                </p>
+                
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1710,150 +1753,6 @@ export default function Home() {
       </section>
 
       {/* Contact Form */}
-      <section id="consultation" className={`relative z-10 py-20 px-6 section-fade-up ${visibleSections.has("consultation") ? "visible" : ""}`}>
-        <div className="max-w-4xl mx-auto">
-          <form className="section-child bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 md:p-10 space-y-6 shadow-2xl" onSubmit={handleContactSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="firstName" className="block text-white/90 text-sm font-medium mb-2">
-                  First name: <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  required
-                  value={contactForm.firstName}
-                  onChange={handleInputChange}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40 focus:bg-white/15 transition-all"
-                  placeholder="Enter your first name"
-                />
-              </div>
-              <div>
-                <label htmlFor="lastName" className="block text-white/90 text-sm font-medium mb-2">
-                  Last name: <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  required
-                  value={contactForm.lastName}
-                  onChange={handleInputChange}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40 focus:bg-white/15 transition-all"
-                  placeholder="Enter your last name"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="email" className="block text-white/90 text-sm font-medium mb-2">
-                  Email address: <span className="text-red-400">*</span>
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={contactForm.email}
-                  onChange={handleInputChange}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40 focus:bg-white/15 transition-all"
-                  placeholder="your.email@example.com"
-                />
-              </div>
-              <div>
-                <label htmlFor="phone" className="block text-white/90 text-sm font-medium mb-2">
-                  Phone number:
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={contactForm.phone}
-                  onChange={handleInputChange}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40 focus:bg-white/15 transition-all"
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="message" className="block text-white/90 text-sm font-medium mb-2">
-                Message: <span className="text-red-400">*</span>
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                rows={6}
-                required
-                value={contactForm.message}
-                onChange={handleInputChange}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder:text-white/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40 focus:bg-white/15 transition-all resize-y"
-                placeholder="Tell us about your project or inquiry..."
-              />
-            </div>
-
-            <div>
-              <label htmlFor="hearAbout" className="block text-white/90 text-sm font-medium mb-2">
-                How did you hear about me?:
-              </label>
-              <select
-                id="hearAbout"
-                name="hearAbout"
-                value={contactForm.hearAbout}
-                onChange={handleInputChange}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40 focus:bg-white/15 transition-all"
-              >
-                <option value="" className="bg-black text-white">Select an option</option>
-                <option value="google" className="bg-black text-white">Google Search</option>
-                <option value="social-media" className="bg-black text-white">Social Media</option>
-                <option value="referral" className="bg-black text-white">Referral</option>
-                <option value="other" className="bg-black text-white">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="consent"
-                  checked={contactForm.consent}
-                  onChange={handleCheckboxChange}
-                  className="mt-1 w-4 h-4 text-purple-600 bg-white/10 border-white/20 rounded focus:ring-purple-500 focus:ring-2"
-                />
-                <span className="text-white/80 text-sm">
-                  Yes, I agree to be contacted and receive helpful emails and understand I can unsubscribe at anytime.
-                </span>
-              </label>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-full transition-all duration-300 flex items-center gap-2 shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 hover:scale-105"
-              >
-                SUBMIT
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-
-            {formStatus.message && (
-              <p
-                className={`text-sm text-center ${
-                  formStatus.type === "success" ? "text-green-400" : "text-red-400"
-                }`}
-                aria-live="polite"
-              >
-                {formStatus.message}
-              </p>
-            )}
-          </form>
-        </div>
-      </section>
 
       {/* Contacts Section */}
       <section id="contacts" className={`relative z-10 py-20 px-6 bg-black/50 pb-32 section-fade-up ${visibleSections.has("contacts") ? "visible" : ""}`}>

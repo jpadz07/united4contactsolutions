@@ -6,14 +6,12 @@ import { useRouter } from "next/navigation";
 export default function ConsultationPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
-    company: "",
-    service: "",
-    teamSize: "",
-    timeline: "",
-    contactPreference: "",
+    hearAbout: "",
+    consent: false,
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,11 +20,14 @@ export default function ConsultationPage() {
     message: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -50,14 +51,12 @@ export default function ConsultationPage() {
         message: "Thank you! We've received your consultation request. Our team will contact you within 24 hours.",
       });
       setFormData({
-        name: "",
+        firstName: "",
+        lastName: "",
         email: "",
         phone: "",
-        company: "",
-        service: "",
-        teamSize: "",
-        timeline: "",
-        contactPreference: "",
+        hearAbout: "",
+        consent: false,
         message: "",
       });
     } catch (error) {
@@ -151,31 +150,32 @@ export default function ConsultationPage() {
 
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl shadow-blue-900/30 p-6 md:p-8">
               <form onSubmit={handleSubmit} className="space-y-5 text-sm text-white">
-                {/* Row: name + company */}
+                {/* Row: first + last name */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="name" className="block font-semibold mb-2">Full name</label>
+                    <label htmlFor="firstName" className="block font-semibold mb-2">First name *</label>
                     <input
                       type="text"
-                      id="name"
-                      name="name"
+                      id="firstName"
+                      name="firstName"
                       required
-                      value={formData.name}
+                      value={formData.firstName}
                       onChange={handleChange}
                       className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                      placeholder="Alex Taylor"
+                      placeholder="Enter your first name"
                     />
                   </div>
                   <div>
-                    <label htmlFor="company" className="block font-semibold mb-2">Company</label>
+                    <label htmlFor="lastName" className="block font-semibold mb-2">Last name *</label>
                     <input
                       type="text"
-                      id="company"
-                      name="company"
-                      value={formData.company}
+                      id="lastName"
+                      name="lastName"
+                      required
+                      value={formData.lastName}
                       onChange={handleChange}
                       className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                      placeholder="Your Company Inc."
+                      placeholder="Enter your last name"
                     />
                   </div>
                 </div>
@@ -183,7 +183,7 @@ export default function ConsultationPage() {
                 {/* Row: email + phone */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="email" className="block font-semibold mb-2">Work email</label>
+                    <label htmlFor="email" className="block font-semibold mb-2">Email address *</label>
                     <input
                       type="email"
                       id="email"
@@ -192,108 +192,71 @@ export default function ConsultationPage() {
                       value={formData.email}
                       onChange={handleChange}
                       className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                      placeholder="you@company.com"
+                      placeholder="your.email@example.com"
                     />
                   </div>
                   <div>
-                    <label htmlFor="phone" className="block font-semibold mb-2">Phone</label>
+                    <label htmlFor="phone" className="block font-semibold mb-2">Phone number</label>
                     <input
                       type="tel"
                       id="phone"
                       name="phone"
-                      required
                       value={formData.phone}
                       onChange={handleChange}
                       className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="(555) 123-4567"
                     />
-                  </div>
-                </div>
-
-                {/* Row: service + team size */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="service" className="block font-semibold mb-2">Service focus</label>
-                    <select
-                      id="service"
-                      name="service"
-                      value={formData.service}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                    >
-                      <option value="">Select a service...</option>
-                      <option value="virtual-assistance">General Virtual Assistance</option>
-                      <option value="marketing">Marketing and Content</option>
-                      <option value="ecommerce">E-Commerce and Retail</option>
-                      <option value="administrative">Administrative and Support</option>
-                      <option value="automotive">Automotive Sales & Aftersales Support</option>
-                      <option value="web-development">Web Development</option>
-                      <option value="other">Other / Multiple Services</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="teamSize" className="block font-semibold mb-2">Team size needed</label>
-                    <select
-                      id="teamSize"
-                      name="teamSize"
-                      value={formData.teamSize}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                    >
-                      <option value="">1-2 specialists</option>
-                      <option value="3-5">3-5 specialists</option>
-                      <option value="6-10">6-10 specialists</option>
-                      <option value="10+">10+ specialists</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Row: timeline + contact preference */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="timeline" className="block font-semibold mb-2">Timeline</label>
-                    <select
-                      id="timeline"
-                      name="timeline"
-                      value={formData.timeline}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                    >
-                      <option value="">ASAP</option>
-                      <option value="2-4 weeks">2-4 weeks</option>
-                      <option value="1-3 months">1-3 months</option>
-                      <option value="planning">Exploring options</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="contactPreference" className="block font-semibold mb-2">Preferred contact</label>
-                    <select
-                      id="contactPreference"
-                      name="contactPreference"
-                      value={formData.contactPreference}
-                      onChange={handleChange}
-                      className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none"
-                    >
-                      <option value="">Email</option>
-                      <option value="phone">Phone</option>
-                      <option value="zoom">Zoom/Teams</option>
-                    </select>
                   </div>
                 </div>
 
                 {/* Message */}
                 <div>
-                  <label htmlFor="message" className="block font-semibold mb-2">What do you want to achieve?</label>
+                  <label htmlFor="message" className="block font-semibold mb-2">Message *</label>
                   <textarea
                     id="message"
                     name="message"
                     required
-                    rows={5}
+                    rows={6}
                     value={formData.message}
                     onChange={handleChange}
                     className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none resize-none"
-                    placeholder="Describe your goals, channels to cover, hours needed, and any SLAs."
+                    placeholder="Tell us about your project or inquiry..."
                   />
+                </div>
+
+                {/* How did you hear + consent */}
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="hearAbout" className="block font-semibold mb-2">How did you hear about us?</label>
+                    <select
+                      id="hearAbout"
+                      name="hearAbout"
+                      value={formData.hearAbout}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/30 outline-none"
+                    >
+                      <option value="">Select an option</option>
+                      <option value="referral">Referral</option>
+                      <option value="social">Social media</option>
+                      <option value="search">Search engine</option>
+                      <option value="event">Event / webinar</option>
+                      <option value="ad">Online ad</option>
+                      <option value="newsletter">Newsletter / email</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <label className="flex items-start gap-3 text-white/80 text-sm">
+                    <input
+                      type="checkbox"
+                      name="consent"
+                      checked={formData.consent}
+                      onChange={handleChange}
+                      className="mt-1 h-4 w-4 rounded border-white/30 bg-white/5 text-cyan-400 focus:ring-cyan-500/40"
+                    />
+                    <span>
+                      Yes, I agree to be contacted and receive helpful emails and understand I can unsubscribe at anytime.
+                    </span>
+                  </label>
                 </div>
 
                 {/* Submit Status */}

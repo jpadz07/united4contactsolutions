@@ -218,6 +218,56 @@ html {
   animation: backdropFadeIn 0.3s ease-out forwards;
 }
 
+.arrow-cta {
+  position: relative;
+  overflow: visible;
+}
+
+.arrow-cta::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, rgba(34, 211, 238, 0) 60%);
+  opacity: 0;
+  transform: scale(0.6);
+  pointer-events: none;
+}
+
+.arrow-cta:active::after {
+  animation: arrowFlash 0.55s ease-out;
+}
+
+@keyframes arrowFlash {
+  0% {
+    opacity: 0.45;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+.carousel-click-anim {
+  animation: carouselBump 0.32s ease;
+}
+
+@keyframes carouselBump {
+  0% {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 @keyframes float {
   0% {
     transform: translateY(100vh) translateX(0) rotate(0deg) scale(0);
