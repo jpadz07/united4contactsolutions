@@ -553,13 +553,14 @@ export default function Home() {
   }, []);
 
   // Content - Header and Hero are hardcoded (not from database)
+  const HERO_HEADLINE = "We Build Solutions That Drive Results";
   const [headerData] = useState({
     companyName: "United4ContactSolutions",
     tagline: "Unity • Focus • Commitment • Stewardship",
     logo: "",
   });
   const [heroData] = useState({
-    headline: "We Build Solutions That Drive Results",
+    headline: HERO_HEADLINE,
     subheadline: "Connecting Every Step",
     description:
       "United4ContactSolutions delivers comprehensive virtual assistance and customer support services that empower businesses to operate efficiently, scale confidently, and achieve sustainable growth through professional, reliable, and innovative solutions.",
@@ -567,7 +568,7 @@ export default function Home() {
     ctaSecondary: "View Services",
   });
   // Force headline to always have spaces - hardcoded value
-  const formattedHeadline = "We Build Solutions That Drive Results";
+  const formattedHeadline = HERO_HEADLINE;
   const [coreValues, setCoreValues] = useState([
     {
       icon: "🤝",
@@ -1013,16 +1014,16 @@ export default function Home() {
           </div>
 
           <h1 className={`text-white text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-8 tracking-tight hero-headline ${heroLoaded ? "hero-headline-visible" : ""}`}>
-            {formattedHeadline.split(" ").map((word, i, arr) =>
-              i === arr.length - 1 ? (
-                <span key={i} className="hero-word" style={{ animationDelay: `${0.8 + i * 0.1}s` }}>
-                  {" "}
+            {formattedHeadline.split(" ").map((word, i, arr) => (
+              <span key={i} className="hero-word" style={{ animationDelay: `${0.8 + i * 0.1}s` }}>
+                {i === arr.length - 1 ? (
                   <span className="text-blue-400 italic">{word}</span>
-                </span>
-              ) : (
-                <span key={i} className="hero-word" style={{ animationDelay: `${0.8 + i * 0.1}s` }}>{word} </span>
-              )
-            )}
+                ) : (
+                  word
+                )}
+                {i !== arr.length - 1 && "\u00a0"}
+              </span>
+            ))}
           </h1>
           
           <div className={`flex flex-col items-center mb-12 hero-subheadline ${heroLoaded ? "hero-subheadline-visible" : ""}`}>
