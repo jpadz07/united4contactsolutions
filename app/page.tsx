@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { coreValueIconMap, serviceIconMap, iconIdMap } from "./components/LandingIcons";
 
@@ -475,12 +475,18 @@ interface TeamMember {
 
 const normalizeHeadline = (headline: string) => {
   if (!headline) return "";
+  // If it already has spaces, return as is
   if (headline.includes(" ")) return headline;
   // Insert spaces before capital letters/numbers to split camel/pascal case strings
-  return headline
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
-    .trim();
+  // First, handle lowercase followed by uppercase (camelCase)
+  let normalized = headline.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+  // Then, handle uppercase followed by uppercase+lowercase (PascalCase like "WeBuild")
+  normalized = normalized.replace(/([A-Z])([A-Z][a-z])/g, "$1 $2");
+  // Special handling for common words that might be concatenated
+  normalized = normalized.replace(/We Build/g, "We Build");
+  normalized = normalized.replace(/Solutions That/g, "Solutions That");
+  normalized = normalized.replace(/That Drive/g, "That Drive");
+  return normalized.trim();
 };
 
 export default function Home() {
@@ -537,8 +543,8 @@ export default function Home() {
       });
     }, observerOptions);
 
-    // Observe all sections
-    const sections = document.querySelectorAll("section[id]");
+    // Observe all sections (and footer) that have an id for reveal animations
+    const sections = document.querySelectorAll("section[id], footer[id]");
     sections.forEach((section) => observer.observe(section));
 
     return () => {
@@ -546,13 +552,13 @@ export default function Home() {
     };
   }, []);
 
-  // Content from Supabase
-  const [headerData, setHeaderData] = useState({
+  // Content - Header and Hero are hardcoded (not from database)
+  const [headerData] = useState({
     companyName: "United4ContactSolutions",
-    tagline: "Unity • Precision • Integrity • Impact",
+    tagline: "Unity • Focus • Commitment • Stewardship",
     logo: "",
   });
-  const [heroData, setHeroData] = useState({
+  const [heroData] = useState({
     headline: "We Build Solutions That Drive Results",
     subheadline: "Connecting Every Step",
     description:
@@ -560,10 +566,8 @@ export default function Home() {
     ctaPrimary: "Schedule Consultation",
     ctaSecondary: "View Services",
   });
-  const formattedHeadline = useMemo(
-    () => normalizeHeadline(heroData.headline || ""),
-    [heroData.headline]
-  );
+  // Force headline to always have spaces - hardcoded value
+  const formattedHeadline = "We Build Solutions That Drive Results";
   const [coreValues, setCoreValues] = useState([
     {
       icon: "🤝",
@@ -637,6 +641,7 @@ export default function Home() {
     },
   ]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [insightIndex, setInsightIndex] = useState(0);
   const visibleTeamMembers = useMemo(() => {
     if (!teamMembers.length) return [];
     const visibleCount = Math.min(5, teamMembers.length);
@@ -644,96 +649,14 @@ export default function Home() {
   }, [teamMembers, teamCarouselIndex]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Header and Hero are now hardcoded - no database loading needed
+  // Both are set in initial state above
+
   // Load data from Supabase
   useEffect(() => {
     const loadContent = async () => {
       try {
-        // Load Header (with cache busting and timestamp)
-        const headerRes = await fetch(`/api/content/header?t=${Date.now()}`, {
-          cache: 'no-store',
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-          },
-        });
-        if (headerRes.ok) {
-          const header = await headerRes.json();
-          console.log("Header API response (raw):", JSON.stringify(header, null, 2));
-          
-          // Handle null response
-          if (header === null) {
-            console.warn("Header data is null - using defaults");
-          } else {
-            // Handle both direct data and wrapped response
-            const headerData = (header && typeof header === 'object' && 'data' in header) ? header.data : header;
-            console.log("Header data (processed):", JSON.stringify(headerData, null, 2));
-            
-            // Check if response has error (database not configured)
-            if (headerData && typeof headerData === 'object' && !headerData.error) {
-              // Always update if we have data (even if some fields are empty)
-              const newHeaderData = {
-                companyName: headerData.company_name || "United4ContactSolutions",
-                tagline: headerData.tagline || "Unity • Precision • Integrity • Impact",
-                logo: headerData.logo || "",
-              };
-              console.log("Setting header data to:", newHeaderData);
-              setHeaderData(newHeaderData);
-              console.log("Header state updated successfully");
-            } else if (headerData && headerData.error) {
-              console.warn("Header data not available:", headerData.error);
-            } else {
-              console.warn("Header data format unexpected:", typeof headerData, headerData);
-            }
-          }
-        } else {
-          const errorData = await headerRes.json().catch(() => ({}));
-          console.warn("Failed to load header:", errorData.error || "Unknown error", headerRes.status);
-        }
-
-        // Load Hero (with cache busting and timestamp)
-        const heroRes = await fetch(`/api/content/hero?t=${Date.now()}`, {
-          cache: 'no-store',
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-          },
-        });
-        if (heroRes.ok) {
-          const hero = await heroRes.json();
-          console.log("Hero API response (raw):", JSON.stringify(hero, null, 2));
-          
-          // Handle null response
-          if (hero === null) {
-            console.warn("Hero data is null - using defaults");
-          } else {
-            // Handle both direct data and wrapped response
-            const heroData = (hero && typeof hero === 'object' && 'data' in hero) ? hero.data : hero;
-            console.log("Hero data (processed):", JSON.stringify(heroData, null, 2));
-            
-            if (heroData && typeof heroData === 'object' && !heroData.error) {
-              // Always update if we have data (even if some fields are empty)
-              const newHeroData = {
-                headline: heroData.headline || "We Build Solutions That Drive Results",
-                subheadline: heroData.subheadline || "Connecting Every Step",
-                description: heroData.description || "",
-                ctaPrimary: heroData.cta_primary || "Schedule Consultation",
-                ctaSecondary: heroData.cta_secondary || "View Services",
-              };
-              console.log("Setting hero data to:", newHeroData);
-              setHeroData(newHeroData);
-              console.log("Hero state updated successfully");
-            } else if (heroData && heroData.error) {
-              console.warn("Hero data not available:", heroData.error);
-            } else {
-              console.warn("Hero data format unexpected:", typeof heroData, heroData);
-            }
-          }
-        } else {
-          const errorData = await heroRes.json().catch(() => ({}));
-          console.warn("Failed to load hero:", errorData.error || "Unknown error", heroRes.status);
-        }
+        // Header and Hero are hardcoded - no loading needed
 
         // Load Core Values
         const coreValuesRes = await fetch("/api/content/core-values");
@@ -811,6 +734,8 @@ export default function Home() {
 
     loadContent();
   }, []);
+
+  // Header and Hero are hardcoded - no polling or reloading needed
 
   // Debug: Log state changes
   useEffect(() => {
@@ -1356,13 +1281,7 @@ export default function Home() {
                   >
                     Talk to us
                   </button>
-                  <a
-                    href="mailto:contact@united4contactsolutions.com?subject=Service%20Inquiry"
-                    className="flex-1 border border-white/20 text-white font-semibold px-6 py-3 rounded-full text-center transition-all duration-300 hover:bg-white/10 hover:border-white/40"
-                    onClick={closeServiceModal}
-                  >
-                    Email details
-                  </a>
+                  
                 </div>
               </div>
             </div>
@@ -1430,77 +1349,121 @@ export default function Home() {
                 </div>
 
                 {teamMembers.length > 1 && (
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-3 md:px-5 lg:px-7">
-                    <button
-                      type="button"
-                      onClick={() => handleTeamCarousel("prev")}
-                      className="arrow-cta group flex pointer-events-auto w-12 h-12 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_26px_rgba(34,211,238,0.35)] active:scale-90 active:shadow-[0_0_22px_rgba(139,92,246,0.35)] backdrop-blur-sm"
-                      aria-label="Previous team member"
-                    >
-                      <svg className="w-6 h-6 transition-transform duration-500 ease-out group-hover:-translate-x-0.5 group-active:-translate-x-1" viewBox="0 0 24 24" aria-hidden="true">
-                        <defs>
-                          <linearGradient id="arrow-prev" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#8b5cf6" />
-                            <stop offset="100%" stopColor="#22d3ee" />
-                          </linearGradient>
-                        </defs>
-                        <path
-                          d="M14.5 5.5 8 12l6.5 6.5"
-                          fill="none"
-                          stroke="url(#arrow-prev)"
-                          strokeWidth="2.25"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M11 12h7"
-                          fill="none"
-                          stroke="url(#arrow-prev)"
-                          strokeWidth="2.25"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleTeamCarousel("next")}
-                      className="arrow-cta group flex pointer-events-auto w-12 h-12 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_26px_rgba(34,211,238,0.35)] active:scale-90 active:shadow-[0_0_22px_rgba(139,92,246,0.35)] backdrop-blur-sm"
-                      aria-label="Next team member"
-                    >
-                      <svg className="w-6 h-6 transition-transform duration-500 ease-out group-hover:translate-x-0.5 group-active:translate-x-1" viewBox="0 0 24 24" aria-hidden="true">
-                        <defs>
-                          <linearGradient id="arrow-next" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#22d3ee" />
-                            <stop offset="100%" stopColor="#8b5cf6" />
-                          </linearGradient>
-                        </defs>
-                        <path
-                          d="M9.5 5.5 16 12l-6.5 6.5"
-                          fill="none"
-                          stroke="url(#arrow-next)"
-                          strokeWidth="2.25"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M13 12H6"
-                          fill="none"
-                          stroke="url(#arrow-next)"
-                          strokeWidth="2.25"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </button>
+                  <div className="mt-16 flex flex-col items-center gap-6">
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => handleTeamCarousel("prev")}
+                        className="arrow-cta group flex w-11 h-11 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_22px_rgba(139,92,246,0.35)] active:scale-90 backdrop-blur-sm"
+                        aria-label="Previous team member"
+                      >
+                        <svg className="w-6 h-6 transition-transform duration-500 ease-out group-hover:-translate-x-0.5 group-active:-translate-x-1" viewBox="0 0 24 24" aria-hidden="true">
+                          <defs>
+                            <linearGradient id="arrow-prev" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#8b5cf6" />
+                              <stop offset="100%" stopColor="#22d3ee" />
+                            </linearGradient>
+                          </defs>
+                          <path
+                            d="M14.5 5.5 8 12l6.5 6.5"
+                            fill="none"
+                            stroke="url(#arrow-prev)"
+                            strokeWidth="2.25"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M11 12h7"
+                            fill="none"
+                            stroke="url(#arrow-prev)"
+                            strokeWidth="2.25"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        {teamMembers.slice(0, 8).map((_, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setTeamCarouselIndex(idx);
+                              setTeamCarouselPulse((p) => p + 1);
+                            }}
+                            className={`h-2 rounded-full transition-all ${
+                              idx === teamCarouselIndex ? "w-6 bg-purple-400" : "w-2 bg-white/25 hover:bg-white/40"
+                            }`}
+                            aria-label={`Go to team member ${idx + 1}`}
+                          >
+                            <span className="sr-only">Go to team member {idx + 1}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleTeamCarousel("next")}
+                        className="arrow-cta group flex w-11 h-11 items-center justify-center rounded-full border border-white/30 bg-black/60 text-white hover:bg-white/15 hover:border-white/50 transition-all duration-500 ease-out shadow-lg shadow-black/50 hover:shadow-[0_0_22px_rgba(139,92,246,0.35)] active:scale-90 backdrop-blur-sm"
+                        aria-label="Next team member"
+                      >
+                        <svg className="w-6 h-6 transition-transform duration-500 ease-out group-hover:translate-x-0.5 group-active:translate-x-1" viewBox="0 0 24 24" aria-hidden="true">
+                          <defs>
+                            <linearGradient id="arrow-next" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#22d3ee" />
+                              <stop offset="100%" stopColor="#8b5cf6" />
+                            </linearGradient>
+                          </defs>
+                          <path
+                            d="M9.5 5.5 16 12l-6.5 6.5"
+                            fill="none"
+                            stroke="url(#arrow-next)"
+                            strokeWidth="2.25"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M13 12H6"
+                            fill="none"
+                            stroke="url(#arrow-next)"
+                            strokeWidth="2.25"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="relative text-center max-w-4xl mx-auto">
-                <p className="text-white/80 italic leading-relaxed">
-                  “Innovation isn’t just about technology; it’s about the people behind it. Our team pushes boundaries,
-                  redefines possibilities, and shapes the future—one bold idea at a time.”
-                </p>
-                
+              <div className="relative max-w-4xl mx-auto mt-2 md:mt-4">
+                {visibleTeamMembers.length > 0 ? (
+                  (() => {
+                    const featured =
+                      visibleTeamMembers[Math.floor(visibleTeamMembers.length / 2)];
+                    return (
+                      <div className="text-center space-y-3">
+                        <p className="text-xs font-medium tracking-[0.28em] uppercase text-purple-300/80">
+                          Team insight
+                        </p>
+                        <p className="text-white/85 italic leading-relaxed text-sm md:text-base">
+                          "
+                          {featured.bio ||
+                            "For us, innovation means quietly solving the hard problems so clients experience clarity, consistency, and genuine care in every interaction."}
+                          "
+                        </p>
+                        <p className="text-white/50 text-xs md:text-sm mt-1">
+                          {featured.name} &mdash; {featured.role}
+                        </p>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <p className="text-white/70 italic leading-relaxed text-sm md:text-base text-center">
+                    Our team&apos;s perspectives on innovation will appear here as soon as profiles are
+                    available.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -1600,35 +1563,153 @@ export default function Home() {
       {/* Projects Section */}
       <section id="projects" className={`relative z-10 py-20 px-6 bg-black/50 section-fade-up ${visibleSections.has("projects") ? "visible" : ""}`}>
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">Featured Projects</h2>
-          <p className="text-white/70 text-center mb-16 max-w-2xl mx-auto">
-            Showcasing our best work and client success stories
+          <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">
+            Individual Insights on Innovation
+          </h2>
+          <p className="text-white/70 text-center mb-16 max-w-3xl mx-auto text-lg leading-relaxed">
+            Every member of our team sees innovation a little differently. Swipe through their perspectives
+            to see how we turn ideas into client-focused solutions.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { title: "E-Commerce Platform", category: "Web Development", color: "from-purple-500/20 to-pink-500/20" },
-              { title: "Healthcare App", category: "Mobile Development", color: "from-blue-500/20 to-cyan-500/20" },
-              { title: "FinTech Dashboard", category: "UI/UX Design", color: "from-green-500/20 to-emerald-500/20" },
-              { title: "SaaS Platform", category: "Cloud Solutions", color: "from-orange-500/20 to-red-500/20" },
-              { title: "Education Portal", category: "Web Development", color: "from-indigo-500/20 to-purple-500/20" },
-              { title: "Real Estate App", category: "Mobile Development", color: "from-teal-500/20 to-blue-500/20" },
-            ].map((project, i) => (
-              <div key={i} className="group relative overflow-hidden rounded-2xl border border-white/10 hover:border-white/20 transition-all duration-300">
-                <div className={`h-64 bg-gradient-to-br ${project.color} flex items-center justify-center`}>
-                  <div className="text-center p-6">
-                    <div className="text-6xl mb-4 opacity-50">💼</div>
-                    <h3 className="text-white text-xl font-semibold mb-2">{project.title}</h3>
-                    <p className="text-white/60 text-sm">{project.category}</p>
+
+          {teamMembers.length > 0 ? (
+            <div className="relative max-w-4xl mx-auto">
+              {/* Carousel card */}
+              {(() => {
+                const member = teamMembers[Math.min(insightIndex, teamMembers.length - 1)];
+                return (
+                  <div
+                    key={insightIndex}
+                    className="group relative overflow-hidden rounded-3xl border border-purple-500/20 bg-gradient-to-br from-[#1b102d] via-[#0b1025] to-[#050812] backdrop-blur-md shadow-[0_24px_80px_rgba(0,0,0,0.85)] px-6 py-8 md:px-10 md:py-10"
+                    style={{ animation: "fadeInUp 0.55s ease both 0.12s" }}
+                  >
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.18),_transparent_55%)] opacity-80 pointer-events-none" />
+                    <div className="relative z-10 flex flex-col md:flex-row items-start gap-8 md:gap-10">
+                      {/* Photo / avatar */}
+                      <div className="w-full md:w-40 flex-shrink-0">
+                        <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden border border-white/15 shadow-xl shadow-black/60 mx-auto md:mx-0">
+                          {member.icon && member.icon.startsWith("data:image") ? (
+                            <img
+                              src={member.icon}
+                              alt={member.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-purple-500/40 via-indigo-500/40 to-blue-500/30 flex items-center justify-center text-5xl md:text-6xl">
+                              {member.icon || "👤"}
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        </div>
+                      </div>
+
+                      {/* Text content */}
+                      <div className="flex-1 space-y-5">
+                        <div>
+                          <h3 className="text-white text-2xl md:text-3xl font-semibold">
+                            {member.name}
+                          </h3>
+                          <p className="text-purple-300/90 text-sm md:text-base mt-1">
+                            {member.role}
+                          </p>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                          <svg
+                            className="w-6 h-6 text-purple-400 mt-1 flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                            />
+                          </svg>
+                          <p className="text-white/85 leading-relaxed italic text-base">
+                            "
+                            {member.bio ||
+                              `Innovation, for me, means designing systems that feel effortless for clients while remaining robust behind the scenes. When technology respects people’s time and attention, it becomes truly powerful.`}
+                            "
+                          </p>
+                        </div>
+
+                        {member.skills && member.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {member.skills.slice(0, 3).map((skill, skillIndex) => (
+                              <span
+                                key={skillIndex}
+                                className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-white/70 text-xs md:text-sm"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                );
+              })()}
+
+              {/* Controls */}
+              <div className="mt-8 flex items-center justify-between gap-4">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setInsightIndex((prev) =>
+                      teamMembers.length ? (prev - 1 + teamMembers.length) % teamMembers.length : 0
+                    )
+                  }
+                  className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white transition-colors h-10 w-10"
+                >
+                  <span className="sr-only">Previous insight</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                <div className="flex-1 flex items-center justify-center gap-2">
+                  {teamMembers.slice(0, 8).map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setInsightIndex(idx)}
+                      className={`h-2 rounded-full transition-all ${
+                        idx === Math.min(insightIndex, teamMembers.length - 1)
+                          ? "w-6 bg-purple-400"
+                          : "w-2 bg-white/25 hover:bg-white/40"
+                      }`}
+                    >
+                      <span className="sr-only">Go to insight {idx + 1}</span>
+                    </button>
+                  ))}
                 </div>
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <button className="text-white px-6 py-3 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 hover:bg-white/20 transition-colors">
-                    View Project
-                  </button>
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setInsightIndex((prev) =>
+                      teamMembers.length ? (prev + 1) % teamMembers.length : 0
+                    )
+                  }
+                  className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white transition-colors h-10 w-10"
+                >
+                  <span className="sr-only">Next insight</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-white/60 text-lg">
+                Team member insights will appear here once team data is loaded.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -1690,28 +1771,122 @@ export default function Home() {
 
       {/* Contact Form */}
 
-      {/* Contacts Section */}
-      <section id="contacts" className={`relative z-10 py-20 px-6 bg-black/50 pb-32 section-fade-up ${visibleSections.has("contacts") ? "visible" : ""}`}>
+      {/* Footer / Contact Section */}
+      <footer
+        id="contacts"
+        className={`relative z-10 py-20 px-6 bg-black/60 section-fade-up ${
+          visibleSections.has("contacts") ? "visible" : ""
+        }`}
+      >
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">Get in Touch</h2>
-          <p className="text-white/70 text-center mb-16 max-w-2xl mx-auto">
-            We'd love to hear from you. Reach out to us through any of these channels.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { title: "Email", info: "contact@united4contactsolutions.com", icon: "📧" },
-              { title: "Phone", info: "+1 (555) 123-4567", icon: "📞" },
-              { title: "Address", info: "123 Business St, Suite 100", icon: "📍" },
-            ].map((contact, i) => (
-              <div key={i} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 text-center hover:bg-white/10 transition-all duration-300">
-                <div className="text-5xl mb-4">{contact.icon}</div>
-                <h3 className="text-white text-xl font-semibold mb-3">{contact.title}</h3>
-                <p className="text-white/70">{contact.info}</p>
+          {/* Outer card */}
+          <div className="bg-gradient-to-r from-slate-900/80 via-slate-900/90 to-purple-900/60 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+            {/* Top content: company + contact info (no form) */}
+            <div className="p-8 md:p-10 lg:p-12">
+              {/* Company + contact info */}
+              <div className="space-y-8 max-w-5xl">
+                {/* Brand */}
+                <div className="space-y-3">
+                  <p className="text-purple-300 text-xs md:text-sm tracking-[0.35em] uppercase">
+                    Contact
+                  </p>
+                  <h2 className="text-white text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight">
+                    Let&apos;s build your next
+                    <span className="block text-purple-300">customer experience.</span>
+                  </h2>
+                  <p className="text-sm md:text-base text-white/70 max-w-xl">
+                    Share your requirements and we&apos;ll respond within one business day with next steps,
+                    timelines, and how our team can support your operations.
+                  </p>
+                </div>
+
+                {/* Direct contact details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-white/50 uppercase tracking-[0.2em]">
+                      Call us
+                    </p>
+                    <a
+                      href="tel:+15551234567"
+                      className="text-white text-base md:text-lg font-medium hover:text-purple-300 transition-colors"
+                    >
+                      +1 (555) 123-4567
+                    </a>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-white/50 uppercase tracking-[0.2em]">
+                      Email
+                    </p>
+                    <a
+                      href="mailto:contact@united4contactsolutions.com"
+                      className="text-white text-base md:text-lg font-medium hover:text-purple-300 transition-colors break-all"
+                    >
+                      contact@united4contactsolutions.com
+                    </a>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-white/50 uppercase tracking-[0.2em]">
+                      Social
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <a
+                        href="https://linkedin.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white/80 text-sm md:text-base hover:text-purple-300 transition-colors"
+                      >
+                        LinkedIn
+                      </a>
+                      <span className="text-white/30">•</span>
+                      <a
+                        href="https://instagram.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white/80 text-sm md:text-base hover:text-purple-300 transition-colors"
+                      >
+                        Instagram
+                      </a>
+                      <span className="text-white/30">•</span>
+                      <a
+                        href="https://x.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white/80 text-sm md:text-base hover:text-purple-300 transition-colors"
+                      >
+                        X
+                      </a>
+                      <span className="text-white/30">•</span>
+                      <a
+                        href="https://facebook.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-white/80 text-sm md:text-base hover:text-purple-300 transition-colors"
+                      >
+                        Facebook
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* Bottom bar: brand + copyright */}
+            <div className="border-t border-white/10 bg-black/40 px-6 md:px-8 lg:px-10 py-5 md:py-6 flex flex-col md:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-purple-500/20 border border-purple-400/60 text-purple-300 text-xs font-semibold">
+                  U4
+                </span>
+                <span className="text-sm md:text-base font-medium text-white">
+                  United4ContactSolutions
+                </span>
+              </div>
+              <p className="text-xs md:text-sm text-white/50 text-center md:text-right">
+                © {new Date().getFullYear()} United4ContactSolutions. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
-      </section>
+      </footer>
 
       {/* Bottom Navigation */}
       <nav className="fixed z-50 bottom-0 left-0 right-0 bg-black/80 backdrop-blur-md border-t border-white/10">

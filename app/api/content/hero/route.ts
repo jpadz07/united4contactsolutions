@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { verifyRequestAuth } from "@/lib/auth/middleware";
 
+// Force dynamic rendering to prevent caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     // Check if Supabase is configured
@@ -148,3 +152,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
+
+ 

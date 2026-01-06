@@ -85,7 +85,7 @@ const defaultServices = [
     desc: "Strategic marketing solutions and engaging content creation services",
     icon: "trending-up", // Next-gen icon ID
     features: ["Content creation", "Social media management", "SEO optimization", "Brand strategy"],
-  },
+  },    
   {
     title: "E-Commerce and Retail",
     desc: "End-to-end e-commerce support and retail management solutions",

@@ -759,3 +759,63 @@ section[id].section-fade-up:nth-of-type(even) {
 .scrollbar-track-gray-900::-webkit-scrollbar-track {
   background: rgba(17, 24, 39, 0.8);
 }
+
+/* Glow effect on hero elements */
+.hero-logo-visible::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%);
+  border-radius: 50%;
+  opacity: 0;
+  animation: heroGlowPulse 2s ease-in-out infinite 1s;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes heroGlowPulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* Smooth parallax for hero background */
+.hero-background-video {
+  transition: transform 0.1s ease-out;
+}
+
+/* Custom Scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.5);
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.5);
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.7);
+}
+
+.scrollbar-thumb-gray-700::-webkit-scrollbar-thumb {
+  background: rgba(55, 65, 81, 0.8);
+}
+
+.scrollbar-track-gray-900::-webkit-scrollbar-track {
+  background: rgba(17, 24, 39, 0.8);
+}
