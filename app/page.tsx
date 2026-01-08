@@ -643,6 +643,28 @@ export default function Home() {
   ]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [insightIndex, setInsightIndex] = useState(0);
+  
+  // Hardcoded team insights
+  const teamInsights = [
+    {
+      name: "Nino Nesperos",
+      role: "Founder",
+      bio: "I believe innovation starts with truly understanding people's needs. My goal is to create simple, practical solutions that help businesses grow and make everyday work easier.",
+      icon: "👤"
+    },
+    {
+      name: "Jason Pada",
+      role: "General IT Services",
+      bio: "For me, innovation means making technology work smoothly and reliably. I enjoy turning ideas into systems that run efficiently in the background so our clients can focus on what matters most.",
+      icon: "👤"
+    },
+    {
+      name: "Louis Gascon",
+      role: "Customer Expert Support",
+      bio: "Innovation is about listening and caring for our customers. I focus on finding better ways to make every interaction easier, faster, and more pleasant, because great support makes a real difference.",
+      icon: "👤"
+    }
+  ];
   const visibleTeamMembers = useMemo(() => {
     if (!teamMembers.length) return [];
     const visibleCount = Math.min(5, teamMembers.length);
@@ -1572,11 +1594,10 @@ export default function Home() {
             to see how we turn ideas into client-focused solutions.
           </p>
 
-          {teamMembers.length > 0 ? (
-            <div className="relative max-w-4xl mx-auto">
-              {/* Carousel card */}
-              {(() => {
-                const member = teamMembers[Math.min(insightIndex, teamMembers.length - 1)];
+          <div className="relative max-w-4xl mx-auto">
+            {/* Carousel card */}
+            {(() => {
+              const member = teamInsights[Math.min(insightIndex, teamInsights.length - 1)];
                 return (
                   <div
                     key={insightIndex}
@@ -1586,19 +1607,11 @@ export default function Home() {
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.18),_transparent_55%)] opacity-80 pointer-events-none" />
                     <div className="relative z-10 flex flex-col md:flex-row items-start gap-8 md:gap-10">
                       {/* Photo / avatar */}
-                      <div className="w-full md:w-40 flex-shrink-0">
+                      <div className="w-full md:w-40 shrink-0">
                         <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden border border-white/15 shadow-xl shadow-black/60 mx-auto md:mx-0">
-                          {member.icon && member.icon.startsWith("data:image") ? (
-                            <img
-                              src={member.icon}
-                              alt={member.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-500/40 via-indigo-500/40 to-blue-500/30 flex items-center justify-center text-5xl md:text-6xl">
-                              {member.icon || "👤"}
-                            </div>
-                          )}
+                          <div className="w-full h-full bg-gradient-to-br from-purple-500/40 via-indigo-500/40 to-blue-500/30 flex items-center justify-center text-5xl md:text-6xl">
+                            {member.icon || "👤"}
+                          </div>
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                         </div>
                       </div>
@@ -1616,7 +1629,7 @@ export default function Home() {
 
                         <div className="flex items-start gap-3">
                           <svg
-                            className="w-6 h-6 text-purple-400 mt-1 flex-shrink-0"
+                            className="w-6 h-6 text-purple-400 mt-1 shrink-0"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -1629,25 +1642,9 @@ export default function Home() {
                             />
                           </svg>
                           <p className="text-white/85 leading-relaxed italic text-base">
-                            "
-                            {member.bio ||
-                              `Innovation, for me, means designing systems that feel effortless for clients while remaining robust behind the scenes. When technology respects people’s time and attention, it becomes truly powerful.`}
-                            "
+                            "{member.bio}"
                           </p>
                         </div>
-
-                        {member.skills && member.skills.length > 0 && (
-                          <div className="flex flex-wrap gap-2 pt-1">
-                            {member.skills.slice(0, 3).map((skill, skillIndex) => (
-                              <span
-                                key={skillIndex}
-                                className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-white/70 text-xs md:text-sm"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -1660,7 +1657,7 @@ export default function Home() {
                   type="button"
                   onClick={() =>
                     setInsightIndex((prev) =>
-                      teamMembers.length ? (prev - 1 + teamMembers.length) % teamMembers.length : 0
+                      teamInsights.length ? (prev - 1 + teamInsights.length) % teamInsights.length : 0
                     )
                   }
                   className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white transition-colors h-10 w-10"
@@ -1672,13 +1669,13 @@ export default function Home() {
                 </button>
 
                 <div className="flex-1 flex items-center justify-center gap-2">
-                  {teamMembers.slice(0, 8).map((_, idx) => (
+                  {teamInsights.map((_, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => setInsightIndex(idx)}
                       className={`h-2 rounded-full transition-all ${
-                        idx === Math.min(insightIndex, teamMembers.length - 1)
+                        idx === Math.min(insightIndex, teamInsights.length - 1)
                           ? "w-6 bg-purple-400"
                           : "w-2 bg-white/25 hover:bg-white/40"
                       }`}
@@ -1692,7 +1689,7 @@ export default function Home() {
                   type="button"
                   onClick={() =>
                     setInsightIndex((prev) =>
-                      teamMembers.length ? (prev + 1) % teamMembers.length : 0
+                      teamInsights.length ? (prev + 1) % teamInsights.length : 0
                     )
                   }
                   className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white transition-colors h-10 w-10"
@@ -1704,31 +1701,101 @@ export default function Home() {
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-white/60 text-lg">
-                Team member insights will appear here once team data is loaded.
-              </p>
-            </div>
-          )}
         </div>
       </section>
 
       {/* Why Choose Us Section */}
       <section className="relative z-10 py-20 px-6 bg-black/50">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-4">Why Choose Us</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
+          <h2 className="text-white text-4xl md:text-5xl font-bold text-center mb-16">Why Choose Us</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { number: "500+", label: "Projects Completed", icon: "🚀" },
-              { number: "200+", label: "Happy Clients", icon: "😊" },
-              { number: "8+", label: "Countries Served", icon: "🌍" },
-              { number: "99%", label: "Client Satisfaction", icon: "⭐" },
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-5xl mb-4">{stat.icon}</div>
-                <div className="text-white text-5xl font-bold mb-2">{stat.number}</div>
-                <div className="text-white/70">{stat.label}</div>
+              { 
+                step: "UNDERSTAND", 
+                number: 1, 
+                title: "Client Needs Assessment",
+                icon: (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                ),
+                hoverText: "We start by understanding your business, customer base, and support requirements. Our team analyzes your current operations, identifies pain points, and designs a customized virtual assistance solution that aligns with your brand voice and business goals."
+              },
+              { 
+                step: "DESIGN", 
+                number: 2, 
+                title: "Custom Support Solutions",
+                icon: (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                ),
+                hoverText: "We design tailored customer support workflows and virtual assistance processes that integrate seamlessly with your existing systems. Our solutions handle everything from customer inquiries and technical support to administrative tasks, ensuring consistent, professional service delivery."
+              },
+              { 
+                step: "MEASURE", 
+                number: 3, 
+                title: "Performance Tracking & Analytics",
+                icon: (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                ),
+                hoverText: "We track key performance metrics including response times, customer satisfaction scores, resolution rates, and service quality. Regular reporting and analytics help you understand how our support services are driving customer loyalty and business growth."
+              },
+              { 
+                step: "IMPROVE", 
+                number: 4, 
+                title: "Continuous Optimization",
+                icon: (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                ),
+                hoverText: "We continuously monitor performance, gather feedback, and refine our processes to improve service quality. Our team stays updated with best practices, adapts to your evolving needs, and ensures your customer support operations remain efficient, scalable, and aligned with your business objectives."
+              },
+            ].map((item, i) => (
+              <div 
+                key={i} 
+                className="group relative bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-slate-900/80 rounded-2xl p-6 shadow-lg hover:shadow-xl hover:shadow-purple-500/20 transition-all duration-300 border border-white/10 hover:border-purple-500/30 backdrop-blur-sm overflow-hidden"
+              >
+                {/* Top section with icon, step label, and number */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="text-purple-400">
+                      {item.icon}
+                    </div>
+                    <span className="text-purple-400 font-semibold text-sm uppercase tracking-wide">
+                      {item.step}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/30 border border-purple-400/40 flex items-center justify-center backdrop-blur-sm">
+                    <span className="text-purple-300 font-bold text-lg">{item.number}</span>
+                  </div>
+                </div>
+
+                {/* Main heading */}
+                <h3 className="text-white font-bold text-lg mb-4 leading-tight min-h-[3rem]">
+                  {item.title}
+                </h3>
+
+                {/* Content area with toggle */}
+                <div className="mt-4">
+                  {/* Default hover indicator - visible by default */}
+                  <div className="block group-hover:hidden transition-all duration-300">
+                    <p className="text-purple-300/60 text-xs">
+                      Hover to show more
+                    </p>
+                  </div>
+
+                  {/* Full description - hidden by default, shown on hover */}
+                  <div className="hidden group-hover:block transition-all duration-300">
+                    <p className="text-purple-200/90 text-sm leading-relaxed">
+                      {item.hoverText}
+                    </p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -1742,7 +1809,7 @@ export default function Home() {
           <p className="text-white/70 text-lg mb-10 max-w-2xl mx-auto">
             Let's discuss how we can help transform your business with innovative solutions
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <button 
               onClick={() => router.push("/consultation")}
               className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold px-8 py-4 rounded-full text-lg transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 hover:scale-105 flex items-center justify-center gap-3"
@@ -1751,20 +1818,6 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
               Book a Consultation
-            </button>
-            <button 
-              onClick={() => {
-                const projectsSection = document.getElementById("projects");
-                if (projectsSection) {
-                  const offset = 80;
-                  const elementPosition = projectsSection.getBoundingClientRect().top;
-                  const offsetPosition = elementPosition + window.pageYOffset - offset;
-                  window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-                }
-              }}
-              className="border border-white/20 text-white font-semibold px-8 py-4 rounded-full text-lg transition-all duration-300 hover:bg-white/10 hover:border-white/40"
-            >
-              View Our Work
             </button>
           </div>
         </div>
